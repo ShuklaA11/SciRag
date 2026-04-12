@@ -184,9 +184,7 @@ SciRag/
 ├── eval/                    # baselines, ablations, error analyses
 ├── tests/                   # pytest suites
 ├── docker-compose.yml       # Grobid + Qdrant
-├── pyproject.toml           # dependencies and build config
-├── PLAN.md                  # week-by-week roadmap and decisions
-└── CLAUDE.md                # project-specific working rules
+└── pyproject.toml           # dependencies and build config
 ```
 
 ## Running things
@@ -216,7 +214,7 @@ The Anthropic and OpenAI providers are stubs in Week 1 — they raise `NotImplem
 
 ## Status
 
-**Week 1 of 14 — foundation complete.** See [`PLAN.md`](PLAN.md) for the full 14-week roadmap and component-level metrics targets.
+**Week 1 of 14 — foundation complete.**
 
 Components and their planned ablation gains:
 
