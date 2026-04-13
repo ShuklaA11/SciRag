@@ -15,6 +15,7 @@ data/cache/*.db
 data/datasets/
 data/grobid_output/
 raw/papers/*.pdf
+raw/papers/**/*.pdf
 
 # Models (downloaded at runtime)
 models/
