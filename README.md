@@ -2,9 +2,7 @@
 
 **An LLM-compiled scientific knowledge base with section-aware retrieval, citation-graph expansion, and claim verification.**
 
-SciRAG ingests scientific papers (PDFs), parses them with Grobid into structured sections, embeds them with SPECTER2, builds a citation graph via Semantic Scholar, and uses an LLM to compile a living Obsidian wiki of paper summaries and synthesized concept articles. Every retrieval and verification component is benchmarked individually against QASPER and SciFact.
-
-This is a 14-week build targeting a publishable ablation table and a working demo. Domain: NLP/ML.
+SciRAG ingests scientific papers (PDFs), parses them with Grobid into structured sections, embeds them with SPECTER2, builds a citation graph via Semantic Scholar, and uses an LLM to compile a living Obsidian wiki of paper summaries and synthesized concept articles. Every retrieval and verification component is benchmarked individually against QASPER and SciFact. Domain: NLP/ML.
 
 ---
 
@@ -208,25 +206,9 @@ export SCIRAG_LLM_PROVIDER=anthropic     # Claude (requires `pip install scirag[
 export SCIRAG_LLM_PROVIDER=openai        # GPT-4o (requires `pip install scirag[openai]`)
 ```
 
-The Anthropic and OpenAI providers are stubs in Week 1 — they raise `NotImplementedError`. Wire them in when needed.
+The Anthropic and OpenAI providers are stubs that raise `NotImplementedError` until wired up.
 
 ---
-
-## Status
-
-**Week 1 of 14 — foundation complete.**
-
-Components and their planned ablation gains:
-
-| # | Component | Metric | Target |
-|---|---|---|---|
-| 1 | Section-aware chunking | recall@5 vs flat | **+15–25%** |
-| 2 | Citation-graph expansion | answer F1 | **+5–12%** |
-| 3 | Query classifier (DistilBERT, 4-class) | accuracy | 82–88% |
-| 4 | Multi-hop reasoning (LangGraph) | coverage vs single-hop | **+20–35%** |
-| 5 | Claim verification (NLI on SciFact) | label accuracy | **75–80%** |
-| 6 | Wiki compilation | papers with summaries | **>95%** |
-| 7 | Wiki link integrity | resolving wikilinks | **100%** |
 
 ## License
 
