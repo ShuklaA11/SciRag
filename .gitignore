@@ -45,6 +45,7 @@ logs/
 
 # Local working notes (not for the public repo)
 CLAUDE.md
+PLAN.md
 
 # Obsidian per-user workspace state
 wiki/.obsidian/workspace.json
