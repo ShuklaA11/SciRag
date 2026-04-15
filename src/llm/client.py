@@ -18,8 +18,15 @@ class LLMClient(ABC):
         max_tokens: int = 1024,
         temperature: float = 0.7,
         response_format: str | None = None,
+        num_ctx: int | None = None,
     ) -> str:
-        """Generate a completion. Returns the assistant's text."""
+        """Generate a completion. Returns the assistant's text.
+
+        num_ctx: Ollama-specific context window size. Ignored by hosted
+        providers (Anthropic/OpenAI auto-size). Needed for local Llama
+        because Ollama's default num_ctx=2048 silently truncates long
+        inputs.
+        """
 
 
 class OllamaProvider(LLMClient):
@@ -41,10 +48,13 @@ class OllamaProvider(LLMClient):
         max_tokens: int = 1024,
         temperature: float = 0.7,
         response_format: str | None = None,
+        num_ctx: int | None = None,
     ) -> str:
         import ollama
 
-        options = {"num_predict": max_tokens, "temperature": temperature}
+        options: dict = {"num_predict": max_tokens, "temperature": temperature}
+        if num_ctx is not None:
+            options["num_ctx"] = num_ctx
         kwargs: dict = {
             "model": self.model,
             "messages": [
