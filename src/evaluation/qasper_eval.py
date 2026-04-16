@@ -169,6 +169,9 @@ def _build_context(retrieved: list[dict]) -> str:
     return "\n\n".join(parts)
 
 
+EVAL_NUM_CTX = 4096
+
+
 def evaluate_question(
     question: str,
     question_id: str,
@@ -180,8 +183,14 @@ def evaluate_question(
     *,
     k: int = 5,
     max_answer_tokens: int = 128,
+    num_ctx: int = EVAL_NUM_CTX,
 ) -> dict[str, Any]:
-    """Run retrieval + LLM on a single QASPER question, return scored dict."""
+    """Run retrieval + LLM on a single QASPER question, return scored dict.
+
+    num_ctx: Ollama context window override. Default 4096 covers
+    question + 5 chunks (~512 tokens each) + system prompt + answer
+    headroom. Ollama's default of 2048 silently truncates this.
+    """
     t0 = time.time()
     retrieved = flat_index.search(question, k=k)
     t1 = time.time()
@@ -192,6 +201,7 @@ def evaluate_question(
         user=user_prompt,
         max_tokens=max_answer_tokens,
         temperature=0.0,
+        num_ctx=num_ctx,
     ).strip()
     t2 = time.time()
 
