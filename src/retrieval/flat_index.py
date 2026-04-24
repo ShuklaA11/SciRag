@@ -45,21 +45,39 @@ class FlatIndex:
                 f"chunks.jsonl has {len(self.chunks)} lines"
             )
 
-    def search(self, query: str, k: int = 5) -> list[dict]:
+    def search(
+        self,
+        query: str,
+        k: int = 5,
+        paper_ids: set[str] | None = None,
+    ) -> list[dict]:
+        """Search the index for top-k chunks matching `query`.
+
+        paper_ids: if given, restrict results to chunks whose arxiv_id is
+        in the set. Implemented by overfetching (k * OVERFETCH) and
+        filtering in Python — correct for our scale (≤1M chunks).
+        """
         if self.index.ntotal == 0:
             return []
-        k = min(k, self.index.ntotal)
         q_vec = self.embedder.encode([query])
         if q_vec.shape[1] != self.index.d:
             raise ValueError(
                 f"Query dim {q_vec.shape[1]} != index dim {self.index.d}"
             )
-        scores, ids = self.index.search(q_vec.astype(np.float32), k)
+
+        # When paper_ids filter is active, scan the full index so we
+        # don't miss in-paper chunks that rank low globally. Flat
+        # IndexFlatIP is O(ntotal * dim) either way; only sort cost
+        # scales with fetch_k, which stays tiny.
+        fetch_k = self.index.ntotal if paper_ids is not None else min(k, self.index.ntotal)
+        scores, ids = self.index.search(q_vec.astype(np.float32), fetch_k)
         results: list[dict] = []
         for score, idx in zip(scores[0], ids[0]):
             if idx < 0:
                 continue
             chunk = self.chunks[int(idx)]
+            if paper_ids is not None and chunk["arxiv_id"] not in paper_ids:
+                continue
             results.append(
                 {
                     "chunk_id": chunk["chunk_id"],
@@ -69,4 +87,6 @@ class FlatIndex:
                     "score": float(score),
                 }
             )
+            if len(results) >= k:
+                break
         return results

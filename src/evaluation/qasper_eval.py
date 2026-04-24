@@ -192,7 +192,7 @@ def evaluate_question(
     headroom. Ollama's default of 2048 silently truncates this.
     """
     t0 = time.time()
-    retrieved = flat_index.search(question, k=k)
+    retrieved = flat_index.search(question, k=k, paper_ids={paper_id})
     t1 = time.time()
     context = _build_context(retrieved)
     user_prompt = PROMPT_USER_TEMPLATE.format(question=question, context=context)

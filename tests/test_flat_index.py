@@ -119,3 +119,28 @@ class TestFlatIndex:
     def test_missing_index_raises(self, tmp_path, fake_embedder):
         with pytest.raises(FileNotFoundError):
             FlatIndex(tmp_path, embedder=fake_embedder)
+
+    def test_paper_ids_filter_restricts_to_paper(self, tmp_path, fake_embedder, tiny_chunks):
+        idx_dir = _build_tiny_index(tmp_path, tiny_chunks, fake_embedder)
+        fi = FlatIndex(idx_dir, embedder=fake_embedder)
+        # "epsilon" best matches p2::0 globally; scoped to p1 it should
+        # return only p1 chunks, never p2.
+        results = fi.search("epsilon", k=5, paper_ids={"p1"})
+        assert len(results) == 2
+        assert {r["arxiv_id"] for r in results} == {"p1"}
+
+    def test_paper_ids_filter_empty_set_returns_nothing(
+        self, tmp_path, fake_embedder, tiny_chunks
+    ):
+        idx_dir = _build_tiny_index(tmp_path, tiny_chunks, fake_embedder)
+        fi = FlatIndex(idx_dir, embedder=fake_embedder)
+        results = fi.search("alpha", k=5, paper_ids={"does-not-exist"})
+        assert results == []
+
+    def test_paper_ids_none_behaves_globally(self, tmp_path, fake_embedder, tiny_chunks):
+        idx_dir = _build_tiny_index(tmp_path, tiny_chunks, fake_embedder)
+        fi = FlatIndex(idx_dir, embedder=fake_embedder)
+        unscoped = fi.search("epsilon", k=1)
+        scoped = fi.search("epsilon", k=1, paper_ids=None)
+        assert unscoped == scoped
+        assert unscoped[0]["arxiv_id"] == "p2"
