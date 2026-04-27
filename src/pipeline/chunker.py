@@ -40,22 +40,39 @@ def chunk_paper(
 
     Args:
         tei_xml: Raw Grobid TEI XML.
-        tokenizer: A HuggingFace tokenizer (used without special tokens).
+        tokenizer: A HuggingFace fast tokenizer (used without special tokens).
         chunk_size: Max tokens per chunk. Should match the embedder's max input.
         overlap: Tokens shared between consecutive chunks.
 
     Returns:
         [{"chunk_idx": 0, "text": "...", "token_count": 487}, ...]
         Empty list if the paper has no extractable text.
+
+    Chunk text is sliced directly from the source string using the
+    tokenizer's offset_mapping — case, hyphens, and citation tokens like
+    BIBREF19 are preserved verbatim. Encoding through the BERT-uncased
+    tokenizer and decoding back lowercases everything and inserts spaces
+    around punctuation, so we never round-trip through decode().
     """
     if overlap >= chunk_size:
         raise ValueError(f"overlap ({overlap}) must be < chunk_size ({chunk_size})")
+    if not tokenizer.is_fast:
+        raise ValueError(
+            "chunk_paper requires a fast tokenizer (offset_mapping). "
+            "Load with AutoTokenizer.from_pretrained(..., use_fast=True)."
+        )
 
     full_text = _build_full_text(tei_xml)
     if not full_text.strip():
         return []
 
-    token_ids = tokenizer.encode(full_text, add_special_tokens=False)
+    enc = tokenizer(
+        full_text,
+        add_special_tokens=False,
+        return_offsets_mapping=True,
+    )
+    token_ids = enc["input_ids"]
+    offsets = enc["offset_mapping"]
     if not token_ids:
         return []
 
@@ -64,14 +81,16 @@ def chunk_paper(
     start = 0
     idx = 0
     while start < len(token_ids):
-        window = token_ids[start : start + chunk_size]
-        text = tokenizer.decode(window, skip_special_tokens=True).strip()
+        end = min(start + chunk_size, len(token_ids))
+        char_start = offsets[start][0]
+        char_end = offsets[end - 1][1]
+        text = full_text[char_start:char_end].strip()
         if text:
             chunks.append(
-                {"chunk_idx": idx, "text": text, "token_count": len(window)}
+                {"chunk_idx": idx, "text": text, "token_count": end - start}
             )
             idx += 1
-        if start + chunk_size >= len(token_ids):
+        if end >= len(token_ids):
             break
         start += stride
 

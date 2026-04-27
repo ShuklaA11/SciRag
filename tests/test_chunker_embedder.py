@@ -88,6 +88,29 @@ class TestChunker:
         with pytest.raises(ValueError):
             chunk_paper("<TEI/>", tokenizer, chunk_size=100, overlap=100)
 
+    def test_preserves_case_hyphens_and_bibref(self, tokenizer):
+        # Regression for the encode/decode round-trip bug that lowercased
+        # text, spaced out hyphens, and stripped BIBREF tokens — corrupting
+        # both the chunk text and the embedded representation.
+        tei = (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            '<TEI xmlns="http://www.tei-c.org/ns/1.0">'
+            "<teiHeader><fileDesc><titleStmt><title>"
+            "Cross-Lingual Pre-Training for NMT</title>"
+            "</titleStmt></fileDesc></teiHeader>"
+            "<text><body><div><head>Background</head>"
+            "<p>We compare with related approaches of pivoting BIBREF19 "
+            "and cross-lingual transfer without pretraining BIBREF16.</p>"
+            "</div></body></text></TEI>"
+        )
+        chunks = chunk_paper(tei, tokenizer, chunk_size=512, overlap=64)
+        assert len(chunks) >= 1
+        joined = " ".join(c["text"] for c in chunks)
+        assert "Cross-Lingual" in joined
+        assert "Pre-Training" in joined
+        assert "BIBREF19" in joined
+        assert "BIBREF16" in joined
+
 
 @pytest.mark.skipif(
     os.environ.get("SCIRAG_RUN_HEAVY") != "1",
