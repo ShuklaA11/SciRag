@@ -14,6 +14,7 @@ data/citation_graph/*.pickle
 data/cache/*.db
 data/datasets/
 data/grobid_output/
+data/index/
 raw/papers/*.pdf
 raw/papers/**/*.pdf
 
