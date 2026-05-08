@@ -29,6 +29,7 @@ from src.evaluation.qasper_eval import (  # noqa: E402
     extract_gold_answers,
     extract_gold_evidence,
     recall_at_k,
+    token_set,
 )
 from src.retrieval.flat_index import FlatIndex  # noqa: E402
 
@@ -68,6 +69,16 @@ def main() -> None:
         "--threshold", type=float, default=DEFAULT_MATCH_THRESHOLD,
         help="Token-coverage threshold for fuzzy recall.",
     )
+    p.add_argument(
+        "--mode", choices=["flat", "section-oracle"], default="flat",
+        help="flat: no section restriction. section-oracle: per-question, "
+             "restrict retrieval to the section_types that contain a gold "
+             "evidence sentence (best-case routing upper bound).",
+    )
+    p.add_argument(
+        "--match-threshold-oracle", type=float, default=DEFAULT_MATCH_THRESHOLD,
+        help="Token-coverage threshold for oracle 'this chunk contains gold' check.",
+    )
     p.add_argument("--limit", type=int, default=None)
     args = p.parse_args()
 
@@ -79,10 +90,19 @@ def main() -> None:
     in_corpus = _in_corpus_arxiv_ids(args.index_dir)
     flat = FlatIndex(args.index_dir, embedder_name=args.embedder)
 
+    # Per-paper chunk lookup, only built for oracle mode.
+    chunks_by_paper: dict[str, list[dict]] = {}
+    if args.mode == "section-oracle":
+        for c in flat.chunks:
+            chunks_by_paper.setdefault(c["arxiv_id"], []).append(c)
+
     fuzzy_vals: list[float] = []
     strict_vals: list[float] = []
     n_skipped_no_corpus = 0
     n_processed = 0
+    n_oracle_routed = 0
+    n_oracle_fallback = 0
+    oracle_type_dist: dict[str, int] = {}
 
     t0 = time.time()
     with jsonl_path.open("w") as jf:
@@ -95,7 +115,39 @@ def main() -> None:
 
             gold_answers = extract_gold_answers(q["answers"])
             gold_evidence = extract_gold_evidence(q["answers"])
-            retrieved = flat.search(q["question"], k=args.k, paper_ids={q["paper_id"]})
+
+            oracle_types: list[str] = []
+            section_filter: set[str] | None = None
+            if args.mode == "section-oracle":
+                paper_chunks = chunks_by_paper.get(q["paper_id"], [])
+                found: set[str] = set()
+                for sent in gold_evidence:
+                    gold_tokens = token_set(sent)
+                    if not gold_tokens:
+                        continue
+                    for c in paper_chunks:
+                        ct = token_set(c["text"])
+                        if not ct:
+                            continue
+                        overlap = len(gold_tokens & ct) / len(gold_tokens)
+                        if overlap >= args.match_threshold_oracle:
+                            st = c.get("section_type")
+                            if st:
+                                found.add(st)
+                if found:
+                    section_filter = found
+                    oracle_types = sorted(found)
+                    n_oracle_routed += 1
+                    for st in oracle_types:
+                        oracle_type_dist[st] = oracle_type_dist.get(st, 0) + 1
+                else:
+                    n_oracle_fallback += 1
+
+            retrieved = flat.search(
+                q["question"], k=args.k,
+                paper_ids={q["paper_id"]},
+                section_types=section_filter,
+            )
             texts = [r["text"] for r in retrieved]
 
             r_fuzzy = recall_at_k(texts, gold_evidence,
@@ -110,11 +162,14 @@ def main() -> None:
                 "gold_evidence": gold_evidence,
                 "retrieved_chunk_ids": [r["chunk_id"] for r in retrieved],
                 "retrieved_arxiv_ids": [r["arxiv_id"] for r in retrieved],
+                "retrieved_section_types": [r.get("section_type") for r in retrieved],
                 "recall_at_k": r_fuzzy,
                 "recall_at_k_strict": r_strict,
                 "match_mode": "fuzzy",
                 "match_threshold": args.threshold,
                 "metric_version": 2,
+                "mode": args.mode,
+                "oracle_section_types": oracle_types,
             }
             jf.write(json.dumps(row) + "\n")
 
@@ -133,6 +188,7 @@ def main() -> None:
         "metric_version": 2,
         "match_mode": "fuzzy",
         "match_threshold": args.threshold,
+        "mode": args.mode,
         "k": args.k,
         "embedder": args.embedder,
         "index_dir": str(args.index_dir),
@@ -145,6 +201,13 @@ def main() -> None:
         "runtime_sec": round(time.time() - t0, 1),
         "results_file": str(jsonl_path),
     }
+    if args.mode == "section-oracle":
+        summary["match_threshold_oracle"] = args.match_threshold_oracle
+        summary["n_oracle_routed"] = n_oracle_routed
+        summary["n_oracle_fallback_no_match"] = n_oracle_fallback
+        summary["oracle_section_types_distribution"] = dict(
+            sorted(oracle_type_dist.items(), key=lambda kv: -kv[1])
+        )
     summary_path.write_text(json.dumps(summary, indent=2))
 
     print(f"\n[retrieval_only] summary -> {summary_path}")

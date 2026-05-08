@@ -95,8 +95,13 @@ def _normalize_loose(s: str) -> str:
     return s
 
 
-def _token_set(s: str) -> set[str]:
+def token_set(s: str) -> set[str]:
+    """Loose, citation-stripped token set used for fuzzy matching."""
     return set(_normalize_loose(s).split())
+
+
+# Back-compat alias.
+_token_set = token_set
 
 
 def recall_at_k(

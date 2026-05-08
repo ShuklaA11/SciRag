@@ -1,0 +1,18 @@
+{
+  "run_name": "week4_bge_section_noroute",
+  "metric_version": 2,
+  "match_mode": "fuzzy",
+  "match_threshold": 0.7,
+  "mode": "flat",
+  "k": 5,
+  "embedder": "bge",
+  "index_dir": "data/index/flat_bge_sectioned",
+  "n_total_dev": 1005,
+  "n_processed": 1002,
+  "n_with_evidence": 925,
+  "n_skipped_no_corpus": 3,
+  "mean_recall_at_k_fuzzy": 0.6568163878163878,
+  "mean_recall_at_k_strict": 0.1867945087945088,
+  "runtime_sec": 23.7,
+  "results_file": "eval/results/week4_bge_section_noroute.jsonl"
+}
