@@ -32,6 +32,7 @@ from src.evaluation.qasper_eval import (  # noqa: E402
     token_set,
 )
 from src.retrieval.flat_index import FlatIndex  # noqa: E402
+from src.router.tfidf_classifier import TfidfRouter  # noqa: E402
 
 DEFAULT_DEV = Path("data/datasets/qasper/dev.json")
 
@@ -70,14 +71,34 @@ def main() -> None:
         help="Token-coverage threshold for fuzzy recall.",
     )
     p.add_argument(
-        "--mode", choices=["flat", "section-oracle"], default="flat",
+        "--mode", choices=["flat", "section-oracle", "section-router"],
+        default="flat",
         help="flat: no section restriction. section-oracle: per-question, "
              "restrict retrieval to the section_types that contain a gold "
-             "evidence sentence (best-case routing upper bound).",
+             "evidence sentence (best-case routing upper bound). "
+             "section-router: use a trained classifier to predict section "
+             "types from the question text; falls back to flat when the "
+             "predicted set is empty or contains 'other'.",
     )
     p.add_argument(
         "--match-threshold-oracle", type=float, default=DEFAULT_MATCH_THRESHOLD,
         help="Token-coverage threshold for oracle 'this chunk contains gold' check.",
+    )
+    p.add_argument(
+        "--router-path", type=Path, default=Path("data/router/tfidf.joblib"),
+        help="Path to a saved TfidfRouter (only used when mode=section-router).",
+    )
+    p.add_argument(
+        "--router-threshold", type=float, default=0.5,
+        help="Per-class probability threshold for router inclusion.",
+    )
+    p.add_argument(
+        "--router-top-n", type=int, default=2,
+        help="Top-N classes by probability to always include (union with threshold).",
+    )
+    p.add_argument(
+        "--router-other-fallback", action="store_true", default=True,
+        help="If 'other' is in the predicted set, drop section restriction.",
     )
     p.add_argument("--limit", type=int, default=None)
     args = p.parse_args()
@@ -90,11 +111,31 @@ def main() -> None:
     in_corpus = _in_corpus_arxiv_ids(args.index_dir)
     flat = FlatIndex(args.index_dir, embedder_name=args.embedder)
 
-    # Per-paper chunk lookup, only built for oracle mode.
+    # Per-paper chunk lookup, built for any mode that needs oracle labels.
     chunks_by_paper: dict[str, list[dict]] = {}
-    if args.mode == "section-oracle":
+    if args.mode in ("section-oracle", "section-router"):
         for c in flat.chunks:
             chunks_by_paper.setdefault(c["arxiv_id"], []).append(c)
+
+    router: TfidfRouter | None = None
+    router_predictions: dict[str, dict] = {}
+    if args.mode == "section-router":
+        router = TfidfRouter.load(args.router_path)
+        eligible = [q for q in questions if q["paper_id"] in in_corpus]
+        if args.limit is not None:
+            eligible = eligible[: args.limit]
+        preds = router.predict(
+            [q["question"] for q in eligible],
+            threshold=args.router_threshold,
+            top_n=args.router_top_n,
+        )
+        for q, pp in zip(eligible, preds):
+            router_predictions[q["question_id"]] = {
+                "labels": list(pp.labels),
+                "probabilities": pp.probabilities,
+            }
+        print(f"[retrieval_only] router loaded from {args.router_path}; "
+              f"predicted on {len(router_predictions)} questions")
 
     fuzzy_vals: list[float] = []
     strict_vals: list[float] = []
@@ -103,6 +144,11 @@ def main() -> None:
     n_oracle_routed = 0
     n_oracle_fallback = 0
     oracle_type_dist: dict[str, int] = {}
+    n_router_routed = 0
+    n_router_fallback_empty = 0
+    n_router_fallback_other = 0
+    iou_vals: list[float] = []
+    router_type_dist: dict[str, int] = {}
 
     t0 = time.time()
     with jsonl_path.open("w") as jf:
@@ -118,7 +164,11 @@ def main() -> None:
 
             oracle_types: list[str] = []
             section_filter: set[str] | None = None
-            if args.mode == "section-oracle":
+            router_labels: list[str] = []
+            router_probs: dict[str, float] = {}
+            router_status: str = ""
+
+            if args.mode in ("section-oracle", "section-router"):
                 paper_chunks = chunks_by_paper.get(q["paper_id"], [])
                 found: set[str] = set()
                 for sent in gold_evidence:
@@ -135,13 +185,44 @@ def main() -> None:
                             if st:
                                 found.add(st)
                 if found:
-                    section_filter = found
                     oracle_types = sorted(found)
+
+            if args.mode == "section-oracle":
+                if oracle_types:
+                    section_filter = set(oracle_types)
                     n_oracle_routed += 1
                     for st in oracle_types:
                         oracle_type_dist[st] = oracle_type_dist.get(st, 0) + 1
                 else:
                     n_oracle_fallback += 1
+
+            if args.mode == "section-router":
+                pred = router_predictions.get(q["question_id"])
+                if pred is not None:
+                    router_labels = list(pred["labels"])
+                    router_probs = pred["probabilities"]
+                if not router_labels:
+                    section_filter = None
+                    router_status = "fallback_empty"
+                    n_router_fallback_empty += 1
+                elif args.router_other_fallback and "other" in router_labels:
+                    section_filter = None
+                    router_status = "fallback_other"
+                    n_router_fallback_other += 1
+                else:
+                    section_filter = set(router_labels)
+                    router_status = "routed"
+                    n_router_routed += 1
+                    for st in router_labels:
+                        router_type_dist[st] = router_type_dist.get(st, 0) + 1
+                if oracle_types:
+                    pred_set = set(router_labels)
+                    gold_set = set(oracle_types)
+                    union = pred_set | gold_set
+                    if union:
+                        iou_vals.append(
+                            len(pred_set & gold_set) / len(union)
+                        )
 
             retrieved = flat.search(
                 q["question"], k=args.k,
@@ -170,6 +251,9 @@ def main() -> None:
                 "metric_version": 2,
                 "mode": args.mode,
                 "oracle_section_types": oracle_types,
+                "router_section_types": router_labels,
+                "router_probabilities": router_probs,
+                "router_status": router_status,
             }
             jf.write(json.dumps(row) + "\n")
 
@@ -207,6 +291,20 @@ def main() -> None:
         summary["n_oracle_fallback_no_match"] = n_oracle_fallback
         summary["oracle_section_types_distribution"] = dict(
             sorted(oracle_type_dist.items(), key=lambda kv: -kv[1])
+        )
+    if args.mode == "section-router":
+        summary["router_path"] = str(args.router_path)
+        summary["router_threshold"] = args.router_threshold
+        summary["router_top_n"] = args.router_top_n
+        summary["router_other_fallback"] = args.router_other_fallback
+        summary["n_router_routed"] = n_router_routed
+        summary["n_router_fallback_empty"] = n_router_fallback_empty
+        summary["n_router_fallback_other"] = n_router_fallback_other
+        summary["mean_iou_router_vs_oracle"] = (
+            mean(iou_vals) if iou_vals else None
+        )
+        summary["router_section_types_distribution"] = dict(
+            sorted(router_type_dist.items(), key=lambda kv: -kv[1])
         )
     summary_path.write_text(json.dumps(summary, indent=2))
 
