@@ -1,0 +1,31 @@
+{
+  "run_name": "week5_tagged_oracle",
+  "metric_version": 2,
+  "match_mode": "fuzzy",
+  "match_threshold": 0.7,
+  "mode": "section-oracle",
+  "k": 5,
+  "embedder": "bge",
+  "index_dir": "data/index/flat_bge_tagged",
+  "n_total_dev": 1005,
+  "n_processed": 1002,
+  "n_with_evidence": 925,
+  "n_skipped_no_corpus": 3,
+  "mean_recall_at_k_fuzzy": 0.865997854997855,
+  "mean_recall_at_k_strict": 0.26053196053196054,
+  "runtime_sec": 26.0,
+  "results_file": "eval/results/week5_tagged_oracle.jsonl",
+  "match_threshold_oracle": 0.7,
+  "n_oracle_routed": 887,
+  "n_oracle_fallback_no_match": 115,
+  "oracle_section_types_distribution": {
+    "other": 418,
+    "experiments": 310,
+    "introduction": 283,
+    "results": 223,
+    "method": 215,
+    "conclusion": 110,
+    "related_work": 109,
+    "abstract": 38
+  }
+}

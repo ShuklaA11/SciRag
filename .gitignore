@@ -48,6 +48,12 @@ logs/
 CLAUDE.md
 PLAN.md
 
+# Router artifacts (regenerable from the section-tagged index)
+data/router/
+
+# Local-only Claude Code state and settings
+.claude/
+
 # Obsidian per-user workspace state
 wiki/.obsidian/workspace.json
 wiki/.obsidian/workspace-mobile.json
