@@ -24,6 +24,10 @@ from typing import Any
 
 ARTICLES = re.compile(r"\b(a|an|the)\b", re.UNICODE)
 WHITESPACE = re.compile(r"\s+")
+BIBREF_RE = re.compile(r"\bBIBREF\d+\b", re.IGNORECASE)
+CITE_PAREN = re.compile(r"\((?:[^()]*?\b(?:19|20)\d{2}[a-z]?)[^()]*?\)")
+PUNCT_RE = re.compile(r"[^\w\s]")
+DEFAULT_MATCH_THRESHOLD = 0.7
 
 
 def normalize_answer(s: str) -> str:
@@ -66,33 +70,87 @@ def max_token_f1(pred: str, golds: list[str]) -> float:
     return max(token_f1(pred, g) for g in golds)
 
 
-def _normalize_for_match(s: str) -> str:
+def _normalize_strict(s: str) -> str:
+    """Legacy substring-match normalization (lowercase + whitespace collapse)."""
     return WHITESPACE.sub(" ", s.lower()).strip()
 
 
+# Back-compat alias for any external callers of the previous name.
+_normalize_for_match = _normalize_strict
+
+
+def _normalize_loose(s: str) -> str:
+    """Citation- and punctuation-stripped normalization for fuzzy matching.
+
+    Removes BIBREF<n> placeholders and inline (Author et al. YYYY) /
+    (YYYY) citation parens, then strips punctuation and collapses
+    whitespace. Designed to make Grobid-resolved author-year citations
+    align with QASPER's BIBREF placeholders.
+    """
+    s = s.lower()
+    s = BIBREF_RE.sub(" ", s)
+    s = CITE_PAREN.sub(" ", s)
+    s = PUNCT_RE.sub(" ", s)
+    s = WHITESPACE.sub(" ", s).strip()
+    return s
+
+
+def _token_set(s: str) -> set[str]:
+    return set(_normalize_loose(s).split())
+
+
 def recall_at_k(
-    retrieved_texts: list[str], gold_evidence: list[str]
+    retrieved_texts: list[str],
+    gold_evidence: list[str],
+    *,
+    strict: bool = False,
+    threshold: float = DEFAULT_MATCH_THRESHOLD,
 ) -> float | None:
     """Sentence-coverage recall@k.
 
-    A gold evidence sentence is "covered" if its normalized form appears
-    as a substring of any retrieved chunk's normalized text. Returns
-    None if gold_evidence is empty (signals "skip in aggregate").
+    Default (fuzzy): a gold evidence sentence is "covered" if some
+    retrieved chunk shares >= `threshold` fraction of the gold sentence's
+    citation-stripped, punctuation-free token set.
+
+    Strict: legacy substring match — a gold sentence is covered iff its
+    normalized form appears as a substring of any retrieved chunk.
+
+    Returns None if gold_evidence is empty or contains only blanks.
     """
     if not gold_evidence:
         return None
-    norm_chunks = [_normalize_for_match(t) for t in retrieved_texts]
+
+    if strict:
+        norm_chunks = [_normalize_strict(t) for t in retrieved_texts]
+        covered = 0
+        denom = 0
+        for sent in gold_evidence:
+            n = _normalize_strict(sent)
+            if not n:
+                continue
+            denom += 1
+            if any(n in c for c in norm_chunks):
+                covered += 1
+        return covered / denom if denom else None
+
+    chunk_token_sets = [_token_set(t) for t in retrieved_texts]
     covered = 0
+    denom = 0
     for sent in gold_evidence:
-        n = _normalize_for_match(sent)
-        if not n:
+        gold_tokens = _token_set(sent)
+        if not gold_tokens:
             continue
-        if any(n in c for c in norm_chunks):
+        denom += 1
+        best = 0.0
+        for ct in chunk_token_sets:
+            overlap = len(gold_tokens & ct) / len(gold_tokens)
+            if overlap > best:
+                best = overlap
+                if best >= 1.0:
+                    break
+        if best >= threshold:
             covered += 1
-    denom = sum(1 for s in gold_evidence if _normalize_for_match(s))
-    if denom == 0:
-        return None
-    return covered / denom
+    return covered / denom if denom else None
 
 
 def extract_gold_answers(qas_answers: list[dict]) -> list[str]:
@@ -184,6 +242,8 @@ def evaluate_question(
     k: int = 5,
     max_answer_tokens: int = 128,
     num_ctx: int = EVAL_NUM_CTX,
+    match_strict: bool = False,
+    match_threshold: float = DEFAULT_MATCH_THRESHOLD,
 ) -> dict[str, Any]:
     """Run retrieval + LLM on a single QASPER question, return scored dict.
 
@@ -206,7 +266,13 @@ def evaluate_question(
     t2 = time.time()
 
     retrieved_texts = [r["text"] for r in retrieved]
-    r_at_k = recall_at_k(retrieved_texts, gold_evidence)
+    r_at_k = recall_at_k(
+        retrieved_texts,
+        gold_evidence,
+        strict=match_strict,
+        threshold=match_threshold,
+    )
+    r_at_k_strict = recall_at_k(retrieved_texts, gold_evidence, strict=True)
     f1 = max_token_f1(predicted, gold_answers) if gold_answers else 0.0
 
     return {
@@ -218,6 +284,7 @@ def evaluate_question(
         "retrieved_chunk_ids": [r["chunk_id"] for r in retrieved],
         "retrieved_arxiv_ids": [r["arxiv_id"] for r in retrieved],
         "recall_at_k": r_at_k,
+        "recall_at_k_strict": r_at_k_strict,
         "predicted_answer": predicted,
         "answer_f1": f1,
         "latency_ms": {
@@ -229,12 +296,21 @@ def evaluate_question(
 
 def aggregate_results(results: list[dict]) -> dict[str, Any]:
     """Compute mean recall@k and mean answer F1 across per-question results.
-    Questions with recall_at_k=None are excluded from the recall mean."""
+    Questions with recall_at_k=None are excluded from the recall mean.
+    Reports `mean_recall_at_k_strict` when any row carries the shadow value."""
     recall_vals = [r["recall_at_k"] for r in results if r["recall_at_k"] is not None]
+    strict_vals = [
+        r["recall_at_k_strict"]
+        for r in results
+        if r.get("recall_at_k_strict") is not None
+    ]
     f1_vals = [r["answer_f1"] for r in results]
-    return {
+    out: dict[str, Any] = {
         "n_evaluated": len(results),
         "n_with_evidence": len(recall_vals),
         "mean_recall_at_k": (sum(recall_vals) / len(recall_vals)) if recall_vals else None,
         "mean_answer_f1": (sum(f1_vals) / len(f1_vals)) if f1_vals else None,
     }
+    if strict_vals:
+        out["mean_recall_at_k_strict"] = sum(strict_vals) / len(strict_vals)
+    return out

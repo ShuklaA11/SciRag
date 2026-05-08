@@ -68,40 +68,105 @@ class TestTokenF1:
         assert max_token_f1("anything", []) == 0.0
 
 
-class TestRecallAtK:
+class TestRecallAtKStrict:
+    """Legacy substring-match behavior, preserved under strict=True."""
+
     def test_full_coverage(self):
         chunks = ["the quick brown fox jumps over the lazy dog"]
         gold = ["quick brown fox", "lazy dog"]
-        assert recall_at_k(chunks, gold) == 1.0
+        assert recall_at_k(chunks, gold, strict=True) == 1.0
 
     def test_partial(self):
         chunks = ["the quick brown fox"]
         gold = ["quick brown fox", "lazy dog"]
-        assert recall_at_k(chunks, gold) == 0.5
+        assert recall_at_k(chunks, gold, strict=True) == 0.5
 
     def test_no_match(self):
         chunks = ["nothing relevant here"]
         gold = ["quick brown fox", "lazy dog"]
-        assert recall_at_k(chunks, gold) == 0.0
+        assert recall_at_k(chunks, gold, strict=True) == 0.0
 
     def test_empty_evidence_returns_none(self):
-        assert recall_at_k(["whatever"], []) is None
+        assert recall_at_k(["whatever"], [], strict=True) is None
 
     def test_whitespace_normalized(self):
         chunks = ["we    propose\na novel\tmethod for retrieval"]
         gold = ["we propose a novel method"]
-        assert recall_at_k(chunks, gold) == 1.0
+        assert recall_at_k(chunks, gold, strict=True) == 1.0
 
     def test_multi_chunk_any_covers(self):
         chunks = ["first chunk about dogs", "second chunk about cats"]
         gold = ["about cats"]
-        assert recall_at_k(chunks, gold) == 1.0
+        assert recall_at_k(chunks, gold, strict=True) == 1.0
 
     def test_blank_gold_sentence_ignored(self):
         chunks = ["hello world"]
         gold = ["   ", "hello"]
-        # blank sentence filtered from denom; 1/1 matches
+        assert recall_at_k(chunks, gold, strict=True) == 1.0
+
+
+class TestRecallAtKFuzzy:
+    """Default token-coverage behavior with citation stripping."""
+
+    def test_bibref_vs_author_year_matches(self):
+        gold = [
+            "We compare against multilingual NMT BIBREF19 and cross-lingual "
+            "transfer BIBREF16."
+        ]
+        chunks = [
+            "we compare against multilingual nmt (johnson et al. 2016) and "
+            "cross-lingual transfer (kim et al. 2017)."
+        ]
+        # Citations strip from both sides; remaining tokens overlap fully.
         assert recall_at_k(chunks, gold) == 1.0
+
+    def test_paren_year_only_citation_stripped(self):
+        chunks = ["foo bar baz"]
+        gold = ["foo bar baz (2020)."]
+        assert recall_at_k(chunks, gold) == 1.0
+
+    def test_partial_overlap_below_threshold_zero(self):
+        # gold has 10 distinct tokens; chunk shares 3 of them. 3/10 < 0.7.
+        gold = ["alpha beta gamma delta epsilon zeta eta theta iota kappa"]
+        chunks = ["alpha beta gamma plus a bunch of unrelated filler words"]
+        assert recall_at_k(chunks, gold) == 0.0
+
+    def test_partial_overlap_above_threshold_one(self):
+        # 8 of 10 gold tokens present in the chunk -> 0.8 >= 0.7.
+        gold = ["alpha beta gamma delta epsilon zeta eta theta iota kappa"]
+        chunks = ["alpha beta gamma delta epsilon zeta eta theta plus filler"]
+        assert recall_at_k(chunks, gold) == 1.0
+
+    def test_whitespace_and_case_variation(self):
+        chunks = ["WE   propose\nA novel\tMETHOD for retrieval"]
+        gold = ["we propose a novel method for retrieval"]
+        assert recall_at_k(chunks, gold) == 1.0
+
+    def test_empty_gold_returns_none(self):
+        assert recall_at_k(["anything"], []) is None
+
+    def test_blank_gold_sentence_ignored_in_denom(self):
+        chunks = ["hello world foo bar"]
+        gold = ["   ", "hello world foo bar"]
+        assert recall_at_k(chunks, gold) == 1.0
+
+    def test_punctuation_stripped_both_sides(self):
+        chunks = ["hello world"]
+        gold = ["hello, world!"]
+        assert recall_at_k(chunks, gold) == 1.0
+
+    def test_threshold_param_respected(self):
+        # 7 of 10 gold tokens in chunk -> 0.7 exactly.
+        gold = ["alpha beta gamma delta epsilon zeta eta theta iota kappa"]
+        chunks = ["alpha beta gamma delta epsilon zeta eta plus some filler"]
+        assert recall_at_k(chunks, gold, threshold=0.5) == 1.0
+        assert recall_at_k(chunks, gold, threshold=0.95) == 0.0
+
+    def test_token_set_helper(self):
+        from src.evaluation.qasper_eval import _token_set
+
+        # BIBREF and parenthetical citations both stripped; punctuation gone.
+        assert _token_set("Foo bar BIBREF12 (Smith 2020), baz!") == {"foo", "bar", "baz"}
 
 
 class TestExtractGold:
