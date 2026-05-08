@@ -13,19 +13,29 @@ from pathlib import Path
 import faiss
 import numpy as np
 
+from src.pipeline.bge_embedder import BGEEmbedder
 from src.pipeline.embedder import EMBED_DIM, Specter2Embedder
 
 DEFAULT_INDEX_DIR = Path("data/index/flat")
+
+
+def _build_embedder(name: str):
+    if name == "specter2":
+        return Specter2Embedder()
+    if name == "bge":
+        return BGEEmbedder()
+    raise ValueError(f"unknown embedder: {name}")
 
 
 class FlatIndex:
     def __init__(
         self,
         index_dir: str | Path = DEFAULT_INDEX_DIR,
-        embedder: Specter2Embedder | None = None,
+        embedder=None,
+        embedder_name: str = "specter2",
     ):
         self.index_dir = Path(index_dir)
-        self.embedder = embedder or Specter2Embedder()
+        self.embedder = embedder or _build_embedder(embedder_name)
 
         index_path = self.index_dir / "index.faiss"
         chunks_path = self.index_dir / "chunks.jsonl"
@@ -59,7 +69,10 @@ class FlatIndex:
         """
         if self.index.ntotal == 0:
             return []
-        q_vec = self.embedder.encode([query])
+        # Route through encode_query() when the embedder defines it
+        # (BGE applies the retrieval instruction prefix on queries only).
+        encode_query = getattr(self.embedder, "encode_query", None)
+        q_vec = encode_query([query]) if encode_query else self.embedder.encode([query])
         if q_vec.shape[1] != self.index.d:
             raise ValueError(
                 f"Query dim {q_vec.shape[1]} != index dim {self.index.d}"
