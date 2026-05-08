@@ -165,6 +165,127 @@ def _window_section(
     return out
 
 
+def _dominant_section(
+    char_start: int,
+    char_end: int,
+    spans: list[tuple[int, int, str, str]],
+) -> tuple[str, str]:
+    """Return (section_type, section_head) of the span that contributes
+    the most characters to ``[char_start, char_end)``. Ties broken by
+    earliest occurrence in document order. Returns ('other', '[untitled]')
+    when no span overlaps (shouldn't happen if spans cover full_text).
+    """
+    overlaps: dict[str, int] = {}
+    first_idx: dict[str, int] = {}
+    head_for_type: dict[str, str] = {}
+    for i, (s, e, t, h) in enumerate(spans):
+        ovl = min(char_end, e) - max(char_start, s)
+        if ovl > 0:
+            overlaps[t] = overlaps.get(t, 0) + ovl
+            if t not in first_idx:
+                first_idx[t] = i
+                head_for_type[t] = h
+    if not overlaps:
+        return "other", "[untitled]"
+    best = max(overlaps.keys(), key=lambda t: (overlaps[t], -first_idx[t]))
+    return best, head_for_type[best]
+
+
+def chunk_paper_section_tagged(
+    tei_xml: str,
+    tokenizer,
+    *,
+    chunk_size: int = 512,
+    overlap: int = 64,
+) -> list[dict]:
+    """Flat-style 512-token windowing with per-chunk section tags.
+
+    Builds the same concatenated full_text as ``chunker.chunk_paper`` so
+    chunks are byte-for-byte identical, then tags each chunk with the
+    section_type that contributes the most characters to it (ties go to
+    the earliest section in document order).
+
+    Returns chunks with the same shape as ``chunk_paper_by_section``:
+    ``{chunk_idx, text, token_count, section_type, section_head}``.
+    """
+    if overlap >= chunk_size:
+        raise ValueError(f"overlap ({overlap}) must be < chunk_size ({chunk_size})")
+    if not tokenizer.is_fast:
+        raise ValueError(
+            "chunk_paper_section_tagged requires a fast tokenizer (offset_mapping)."
+        )
+
+    title = extract_title(tei_xml)
+    abstract = extract_abstract(tei_xml)
+    sections = extract_sections(tei_xml)
+
+    parts: list[tuple[str, str, str]] = []
+    if title and title != "[unknown title]":
+        if abstract:
+            title_type = "abstract"
+        elif sections:
+            title_type = section_type_for_head(sections[0].get("head", ""))
+        else:
+            title_type = "other"
+        parts.append((title, title_type, "Title"))
+
+    if abstract:
+        parts.append((abstract, "abstract", "Abstract"))
+
+    resolved_types = resolve_section_types(sections)
+    for s, sec_type in zip(sections, resolved_types):
+        head = s["head"] if s["head"] and s["head"] != "[untitled]" else ""
+        body = s["text"]
+        sec_text = f"{head}\n{body}" if head else body
+        parts.append((sec_text, sec_type, head or "[untitled]"))
+
+    if not parts:
+        return []
+
+    full_text = "\n\n".join(p[0] for p in parts)
+    if not full_text.strip():
+        return []
+
+    spans: list[tuple[int, int, str, str]] = []
+    cursor = 0
+    for i, (text, sec_type, head) in enumerate(parts):
+        if i > 0:
+            cursor += 2  # "\n\n"
+        spans.append((cursor, cursor + len(text), sec_type, head))
+        cursor += len(text)
+
+    enc = tokenizer(full_text, add_special_tokens=False, return_offsets_mapping=True)
+    token_ids = enc["input_ids"]
+    offsets = enc["offset_mapping"]
+    if not token_ids:
+        return []
+
+    chunks: list[dict] = []
+    stride = chunk_size - overlap
+    start = 0
+    idx = 0
+    while start < len(token_ids):
+        end = min(start + chunk_size, len(token_ids))
+        char_start = offsets[start][0]
+        char_end = offsets[end - 1][1]
+        text = full_text[char_start:char_end].strip()
+        if text:
+            sec_type, head = _dominant_section(char_start, char_end, spans)
+            chunks.append({
+                "chunk_idx": idx,
+                "text": text,
+                "token_count": end - start,
+                "section_type": sec_type,
+                "section_head": head,
+            })
+            idx += 1
+        if end >= len(token_ids):
+            break
+        start += stride
+
+    return chunks
+
+
 def chunk_paper_by_section(
     tei_xml: str,
     tokenizer,
