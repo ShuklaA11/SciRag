@@ -1,0 +1,477 @@
+{
+  "n_joined": 1002,
+  "n_with_evidence": 925,
+  "means": {
+    "flat": 0.7385,
+    "sect_noroute": 0.6568,
+    "sect_oracle": 0.8433
+  },
+  "deltas": {
+    "sect_noroute_minus_flat": -0.0817,
+    "sect_oracle_minus_flat": 0.1048,
+    "sect_oracle_minus_sect_noroute": 0.1865
+  },
+  "delta_distribution_sect_noroute_minus_flat": {
+    "regress": 221,
+    "stable": 609,
+    "improve": 95,
+    "eps": 0.05,
+    "quantiles": {
+      "n": 925,
+      "mean": -0.0817,
+      "median": 0.0,
+      "p10": -0.5,
+      "p90": 0.2,
+      "min": -1.0,
+      "max": 1.0
+    }
+  },
+  "by_section_type": {
+    "experiments": {
+      "n": 298,
+      "mean_delta_sect_noroute_minus_flat": -0.0473,
+      "mean_delta_sect_oracle_minus_sect_noroute": 0.1809
+    },
+    "other": {
+      "n": 345,
+      "mean_delta_sect_noroute_minus_flat": -0.1023,
+      "mean_delta_sect_oracle_minus_sect_noroute": 0.1779
+    },
+    "method": {
+      "n": 169,
+      "mean_delta_sect_noroute_minus_flat": -0.1407,
+      "mean_delta_sect_oracle_minus_sect_noroute": 0.2243
+    },
+    "introduction": {
+      "n": 233,
+      "mean_delta_sect_noroute_minus_flat": -0.1418,
+      "mean_delta_sect_oracle_minus_sect_noroute": 0.2227
+    },
+    "results": {
+      "n": 191,
+      "mean_delta_sect_noroute_minus_flat": -0.0915,
+      "mean_delta_sect_oracle_minus_sect_noroute": 0.1754
+    },
+    "conclusion": {
+      "n": 94,
+      "mean_delta_sect_noroute_minus_flat": -0.0916,
+      "mean_delta_sect_oracle_minus_sect_noroute": 0.1461
+    },
+    "abstract": {
+      "n": 57,
+      "mean_delta_sect_noroute_minus_flat": -0.1008,
+      "mean_delta_sect_oracle_minus_sect_noroute": 0.1431
+    },
+    "related_work": {
+      "n": 61,
+      "mean_delta_sect_noroute_minus_flat": -0.0645,
+      "mean_delta_sect_oracle_minus_sect_noroute": 0.1538
+    }
+  },
+  "by_n_oracle_types": {
+    "2": {
+      "n": 207,
+      "mean_delta_sect_noroute_minus_flat": -0.1388,
+      "mean_delta_sect_oracle_minus_sect_noroute": 0.2157
+    },
+    "1": {
+      "n": 540,
+      "mean_delta_sect_noroute_minus_flat": -0.0471,
+      "mean_delta_sect_oracle_minus_sect_noroute": 0.1934
+    },
+    "3": {
+      "n": 81,
+      "mean_delta_sect_noroute_minus_flat": -0.1525,
+      "mean_delta_sect_oracle_minus_sect_noroute": 0.234
+    },
+    "5": {
+      "n": 18,
+      "mean_delta_sect_noroute_minus_flat": -0.0414,
+      "mean_delta_sect_oracle_minus_sect_noroute": 0.0759
+    },
+    "4": {
+      "n": 35,
+      "mean_delta_sect_noroute_minus_flat": -0.0911,
+      "mean_delta_sect_oracle_minus_sect_noroute": 0.0886
+    },
+    "0": {
+      "n": 41,
+      "mean_delta_sect_noroute_minus_flat": -0.1057,
+      "mean_delta_sect_oracle_minus_sect_noroute": 0.0
+    },
+    "8": {
+      "n": 1,
+      "mean_delta_sect_noroute_minus_flat": -0.25,
+      "mean_delta_sect_oracle_minus_sect_noroute": 0.0
+    },
+    "7": {
+      "n": 1,
+      "mean_delta_sect_noroute_minus_flat": -0.5,
+      "mean_delta_sect_oracle_minus_sect_noroute": 0.0
+    },
+    "6": {
+      "n": 1,
+      "mean_delta_sect_noroute_minus_flat": 0.0,
+      "mean_delta_sect_oracle_minus_sect_noroute": 0.0
+    }
+  },
+  "flat_chunk_stats": {
+    "n_chunks": 15067,
+    "n_papers": 1166,
+    "tokens_overall": {
+      "n": 15067,
+      "mean": 494.6261,
+      "median": 512.0,
+      "p10": 512.0,
+      "p90": 512.0,
+      "min": 65.0,
+      "max": 512.0
+    },
+    "chunks_per_paper": {
+      "n": 1166,
+      "mean": 12.922,
+      "median": 12.0,
+      "p10": 7.0,
+      "p90": 19.0,
+      "min": 2.0,
+      "max": 86.0
+    },
+    "tokens_by_section": {
+      "<unsectioned>": {
+        "n": 15067,
+        "mean": 494.6261,
+        "median": 512.0,
+        "p10": 512.0,
+        "p90": 512.0,
+        "min": 65.0,
+        "max": 512.0
+      }
+    }
+  },
+  "sect_chunk_stats": {
+    "n_chunks": 23235,
+    "n_papers": 1166,
+    "tokens_overall": {
+      "n": 23235,
+      "mean": 297.5122,
+      "median": 277.0,
+      "p10": 87.0,
+      "p90": 512.0,
+      "min": 2.0,
+      "max": 512.0
+    },
+    "chunks_per_paper": {
+      "n": 1166,
+      "mean": 19.9271,
+      "median": 19.0,
+      "p10": 11.0,
+      "p90": 29.0,
+      "min": 5.0,
+      "max": 107.0
+    },
+    "tokens_by_section": {
+      "other": {
+        "n": 8508,
+        "mean": 287.6794,
+        "median": 270.0,
+        "p10": 75.0,
+        "p90": 512.0,
+        "min": 2.0,
+        "max": 512.0
+      },
+      "experiments": {
+        "n": 2941,
+        "mean": 280.3594,
+        "median": 262.0,
+        "p10": 77.0,
+        "p90": 512.0,
+        "min": 9.0,
+        "max": 512.0
+      },
+      "method": {
+        "n": 2919,
+        "mean": 282.9654,
+        "median": 261.0,
+        "p10": 78.0,
+        "p90": 512.0,
+        "min": 7.0,
+        "max": 512.0
+      },
+      "results": {
+        "n": 2585,
+        "mean": 308.6008,
+        "median": 300.0,
+        "p10": 92.0,
+        "p90": 512.0,
+        "min": 9.0,
+        "max": 512.0
+      },
+      "introduction": {
+        "n": 2433,
+        "mean": 395.85,
+        "median": 509.0,
+        "p10": 147.0,
+        "p90": 512.0,
+        "min": 33.0,
+        "max": 512.0
+      },
+      "conclusion": {
+        "n": 1467,
+        "mean": 251.983,
+        "median": 207.0,
+        "p10": 96.0,
+        "p90": 512.0,
+        "min": 19.0,
+        "max": 512.0
+      },
+      "related_work": {
+        "n": 1211,
+        "mean": 363.0322,
+        "median": 412.0,
+        "p10": 114.0,
+        "p90": 512.0,
+        "min": 11.0,
+        "max": 512.0
+      },
+      "abstract": {
+        "n": 1171,
+        "mean": 208.778,
+        "median": 200.0,
+        "p10": 133.0,
+        "p90": 290.0,
+        "min": 49.0,
+        "max": 512.0
+      }
+    }
+  },
+  "top_regressions": [
+    {
+      "qid": "01a41c0a4a7365cd37d28690735114f2ff5229f2",
+      "paper_id": "1612.08205",
+      "question": "What social media platform did they look at?",
+      "r_flat": 1.0,
+      "r_sect_noroute": 0.0,
+      "r_sect_oracle": 1.0,
+      "oracle_section_types": [
+        "experiments"
+      ]
+    },
+    {
+      "qid": "03ebb29c08375afc42a957c7b2dc1a42bed7b713",
+      "paper_id": "1909.05359",
+      "question": "How is the effectiveness of this pipeline approach evaluated?",
+      "r_flat": 1.0,
+      "r_sect_noroute": 0.0,
+      "r_sect_oracle": 1.0,
+      "oracle_section_types": [
+        "other"
+      ]
+    },
+    {
+      "qid": "0689904db9b00a814e3109fb1698086370a28fa2",
+      "paper_id": "1811.05711",
+      "question": "Which text embedding methodologies are used?",
+      "r_flat": 1.0,
+      "r_sect_noroute": 0.0,
+      "r_sect_oracle": 1.0,
+      "oracle_section_types": [
+        "method",
+        "results"
+      ]
+    },
+    {
+      "qid": "0737954caf66f2b4c898b356d2a3c43748b9706b",
+      "paper_id": "2004.04721",
+      "question": "Do they recommend translating the premise and hypothesis together?",
+      "r_flat": 1.0,
+      "r_sect_noroute": 0.0,
+      "r_sect_oracle": 0.0,
+      "oracle_section_types": [
+        "experiments"
+      ]
+    },
+    {
+      "qid": "114934e1a1e818630ff33ac5c4cd4be6c6f75bb2",
+      "paper_id": "1811.08603",
+      "question": "How effective is their NCEL approach overall?",
+      "r_flat": 1.0,
+      "r_sect_noroute": 0.0,
+      "r_sect_oracle": 1.0,
+      "oracle_section_types": [
+        "introduction",
+        "results"
+      ]
+    },
+    {
+      "qid": "12f7fac818f0006cf33269c9eafd41bbb8979a48",
+      "paper_id": "1901.01010",
+      "question": "What kind of model do they use?",
+      "r_flat": 1.0,
+      "r_sect_noroute": 0.0,
+      "r_sect_oracle": 0.6666666666666666,
+      "oracle_section_types": [
+        "conclusion",
+        "experiments",
+        "introduction",
+        "method",
+        "other"
+      ]
+    },
+    {
+      "qid": "15cdd9ea4bae8891c1652da2ed34c87bbbd0edb8",
+      "paper_id": "1806.05513",
+      "question": "Where did the texts in the corpus come from?",
+      "r_flat": 1.0,
+      "r_sect_noroute": 0.0,
+      "r_sect_oracle": 0.0,
+      "oracle_section_types": [
+        "other"
+      ]
+    },
+    {
+      "qid": "15e481e668114e4afe0c78eefb716ffe1646b494",
+      "paper_id": "1908.09246",
+      "question": "What alternative to Gibbs sampling is used?",
+      "r_flat": 1.0,
+      "r_sect_noroute": 0.0,
+      "r_sect_oracle": 1.0,
+      "oracle_section_types": [
+        "other"
+      ]
+    },
+    {
+      "qid": "184b0082e10ce191940c1d24785b631828a9f714",
+      "paper_id": "1604.00400",
+      "question": "What is the common belief that this paper refutes? (c.f. 'contrary to the common belief, ROUGE is not much [sic] reliable'",
+      "r_flat": 1.0,
+      "r_sect_noroute": 0.0,
+      "r_sect_oracle": 1.0,
+      "oracle_section_types": [
+        "introduction"
+      ]
+    },
+    {
+      "qid": "197b276d0610ebfacd57ab46b0b29f3033c96a40",
+      "paper_id": "1712.00991",
+      "question": "What methods were used for sentence classification?",
+      "r_flat": 1.0,
+      "r_sect_noroute": 0.0,
+      "r_sect_oracle": 1.0,
+      "oracle_section_types": [
+        "other"
+      ]
+    },
+    {
+      "qid": "1cb100182508cf55b3509283c0e2bbcd527d625e",
+      "paper_id": "1601.02403",
+      "question": "How is the data in the new corpus come sourced?",
+      "r_flat": 1.0,
+      "r_sect_noroute": 0.0,
+      "r_sect_oracle": 0.0,
+      "oracle_section_types": [
+        "other"
+      ]
+    },
+    {
+      "qid": "1ff0fccf0dca95a6630380c84b0422bed854269a",
+      "paper_id": "1911.06964",
+      "question": "How are models evaluated in this human-machine communication game?",
+      "r_flat": 1.0,
+      "r_sect_noroute": 0.0,
+      "r_sect_oracle": 1.0,
+      "oracle_section_types": [
+        "experiments"
+      ]
+    },
+    {
+      "qid": "21548433abd21346659505296fb0576e78287a74",
+      "paper_id": "1909.13104",
+      "question": "What dataset is used for this work?",
+      "r_flat": 1.0,
+      "r_sect_noroute": 0.0,
+      "r_sect_oracle": 1.0,
+      "oracle_section_types": [
+        "introduction",
+        "method"
+      ]
+    },
+    {
+      "qid": "220d11a03897d85af91ec88a9b502815c7d2b6f3",
+      "paper_id": "1909.03135",
+      "question": "Why is lemmatization not necessary in English?",
+      "r_flat": 1.0,
+      "r_sect_noroute": 0.0,
+      "r_sect_oracle": 1.0,
+      "oracle_section_types": [
+        "introduction"
+      ]
+    },
+    {
+      "qid": "23b2901264bda91045258b5d4120879ae292e950",
+      "paper_id": "1911.02855",
+      "question": "What are method improvements of F1 for paraphrase identification?",
+      "r_flat": 1.0,
+      "r_sect_noroute": 0.0,
+      "r_sect_oracle": 0.0,
+      "oracle_section_types": []
+    },
+    {
+      "qid": "29c014baf99fb9f40b5171aab3e2c7f12a748f79",
+      "paper_id": "1908.04042",
+      "question": "what algorithms did they use?",
+      "r_flat": 1.0,
+      "r_sect_noroute": 0.0,
+      "r_sect_oracle": 1.0,
+      "oracle_section_types": [
+        "method",
+        "related_work",
+        "results"
+      ]
+    },
+    {
+      "qid": "2b3cac7af10d358d4081083962d03ea2798cf622",
+      "paper_id": "1611.04798",
+      "question": "Does their framework always generate purely attention-based models?",
+      "r_flat": 1.0,
+      "r_sect_noroute": 0.0,
+      "r_sect_oracle": 1.0,
+      "oracle_section_types": [
+        "other"
+      ]
+    },
+    {
+      "qid": "2c7e94a65f5f532aa31d3e538dcab0468a43b264",
+      "paper_id": "1909.02027",
+      "question": "How was the dataset annotated?",
+      "r_flat": 1.0,
+      "r_sect_noroute": 0.0,
+      "r_sect_oracle": 1.0,
+      "oracle_section_types": [
+        "experiments"
+      ]
+    },
+    {
+      "qid": "2dbf6fe095cd879a9bf40f110b7b72c8bdde9475",
+      "paper_id": "1709.10367",
+      "question": "What hierarchical modelling approach is used?",
+      "r_flat": 1.0,
+      "r_sect_noroute": 0.0,
+      "r_sect_oracle": 1.0,
+      "oracle_section_types": [
+        "introduction",
+        "other"
+      ]
+    },
+    {
+      "qid": "30e21f5bc1d2f80f422c56d62abca9cd3f2cd4a1",
+      "paper_id": "1801.02073",
+      "question": "How do they analyze contextual similaries across datasets?",
+      "r_flat": 1.0,
+      "r_sect_noroute": 0.0,
+      "r_sect_oracle": 1.0,
+      "oracle_section_types": [
+        "results"
+      ]
+    }
+  ]
+}
