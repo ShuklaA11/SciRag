@@ -1,0 +1,29 @@
+{
+  "run_name": "week6_rerank_k10",
+  "metric_version": 2,
+  "match_mode": "fuzzy",
+  "match_threshold": 0.7,
+  "mode": "flat",
+  "k": 5,
+  "embedder": "bge",
+  "index_dir": "data/index/flat_bge_tagged",
+  "n_total_dev": 1005,
+  "n_processed": 1002,
+  "n_with_evidence": 925,
+  "n_skipped_no_corpus": 3,
+  "mean_recall_at_k_fuzzy": 0.7712192192192192,
+  "mean_recall_at_k_strict": 0.22052681252681253,
+  "runtime_sec": 115.9,
+  "results_file": "eval/results/week6_rerank_k10.jsonl",
+  "rerank": true,
+  "rerank_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+  "retrieve_k": 10,
+  "latency_ms": {
+    "retrieve_p50": 17.4,
+    "retrieve_p95": 31.59,
+    "rerank_p50": 101.51,
+    "rerank_p95": 108.7,
+    "total_p50": 116.36,
+    "total_p95": 133.65
+  }
+}

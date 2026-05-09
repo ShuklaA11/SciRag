@@ -34,6 +34,9 @@ from src.evaluation.qasper_eval import (  # noqa: E402
 from src.retrieval.flat_index import FlatIndex  # noqa: E402
 from src.router.tfidf_classifier import TfidfRouter  # noqa: E402
 
+# CrossEncoderReranker is imported lazily inside main() to avoid loading
+# sentence-transformers and torch when --rerank is not used.
+
 DEFAULT_DEV = Path("data/datasets/qasper/dev.json")
 
 
@@ -100,6 +103,34 @@ def main() -> None:
         "--router-other-fallback", action="store_true", default=True,
         help="If 'other' is in the predicted set, drop section restriction.",
     )
+    p.add_argument(
+        "--rerank", action="store_true",
+        help="Apply cross-encoder reranking to retrieved candidates.",
+    )
+    p.add_argument(
+        "--rerank-model", type=str,
+        default="cross-encoder/ms-marco-MiniLM-L-6-v2",
+        help="Cross-encoder model name (sentence-transformers).",
+    )
+    p.add_argument(
+        "--retrieve-k", type=int, default=20,
+        help="Number of bi-encoder candidates to fetch before reranking. "
+             "Ignored when --rerank is off.",
+    )
+    p.add_argument(
+        "--expand-citations", action="store_true",
+        help="Expand retrieval to in-corpus 1-hop citation neighbors.",
+    )
+    p.add_argument(
+        "--citation-graph",
+        type=Path, default=Path("data/citation_graph/graph.pickle"),
+        help="Path to the citation-graph pickle.",
+    )
+    p.add_argument(
+        "--citation-directions",
+        choices=["out", "in", "both"], default="both",
+        help="Edge direction for 1-hop expansion.",
+    )
     p.add_argument("--limit", type=int, default=None)
     args = p.parse_args()
 
@@ -137,6 +168,25 @@ def main() -> None:
         print(f"[retrieval_only] router loaded from {args.router_path}; "
               f"predicted on {len(router_predictions)} questions")
 
+    reranker = None
+    if args.rerank:
+        from src.retrieval.cross_encoder_reranker import CrossEncoderReranker
+        reranker = CrossEncoderReranker(model_name=args.rerank_model)
+        print(f"[retrieval_only] reranker loaded: {args.rerank_model} "
+              f"on {reranker.device}")
+
+    expander = None
+    if args.expand_citations:
+        from src.retrieval.citation_expander import CitationExpander
+        expander = CitationExpander(graph_path=args.citation_graph)
+        print(f"[retrieval_only] citation graph loaded: "
+              f"{len(expander.graph.nodes)} nodes, "
+              f"{len(expander.in_corpus)} in-corpus")
+    expansion_neighbor_counts: list[int] = []
+    n_questions_with_neighbors = 0
+
+    retrieve_latency_ms: list[float] = []
+    rerank_latency_ms: list[float] = []
     fuzzy_vals: list[float] = []
     strict_vals: list[float] = []
     n_skipped_no_corpus = 0
@@ -224,12 +274,44 @@ def main() -> None:
                             len(pred_set & gold_set) / len(union)
                         )
 
+            t_q0 = time.time()
+            fetch_k = args.retrieve_k if args.rerank else args.k
+            paper_ids = {q["paper_id"]}
+            expansion_neighbors: list[str] = []
+            if expander is not None:
+                nbrs = expander.neighbors(
+                    q["paper_id"],
+                    in_corpus_only=True,
+                    directions=args.citation_directions,
+                )
+                expansion_neighbors = sorted(nbrs)
+                paper_ids |= nbrs
+            expansion_neighbor_counts.append(len(expansion_neighbors))
+            if expansion_neighbors:
+                n_questions_with_neighbors += 1
             retrieved = flat.search(
-                q["question"], k=args.k,
-                paper_ids={q["paper_id"]},
+                q["question"], k=fetch_k,
+                paper_ids=paper_ids,
                 section_types=section_filter,
             )
+            t_retrieve = time.time() - t_q0
+
+            ce_scores: list[float] = []
+            t_rerank = 0.0
+            if args.rerank and retrieved:
+                t_r0 = time.time()
+                ranked = reranker.rerank(q["question"], retrieved, top_k=args.k)
+                t_rerank = time.time() - t_r0
+                retrieved = [r.chunk for r in ranked]
+                ce_scores = [r.ce_score for r in ranked]
+            elif args.rerank:
+                retrieved = retrieved[: args.k]
+            else:
+                retrieved = retrieved[: args.k]
+
             texts = [r["text"] for r in retrieved]
+            retrieve_latency_ms.append(round(t_retrieve * 1000, 2))
+            rerank_latency_ms.append(round(t_rerank * 1000, 2))
 
             r_fuzzy = recall_at_k(texts, gold_evidence,
                                   strict=False, threshold=args.threshold)
@@ -254,6 +336,13 @@ def main() -> None:
                 "router_section_types": router_labels,
                 "router_probabilities": router_probs,
                 "router_status": router_status,
+                "rerank": args.rerank,
+                "ce_scores": ce_scores,
+                "retrieve_latency_ms": retrieve_latency_ms[-1],
+                "rerank_latency_ms": rerank_latency_ms[-1],
+                "expand_citations": args.expand_citations,
+                "expansion_neighbors": expansion_neighbors,
+                "expansion_neighbor_count": len(expansion_neighbors),
             }
             jf.write(json.dumps(row) + "\n")
 
@@ -284,7 +373,40 @@ def main() -> None:
         "mean_recall_at_k_strict": mean(strict_vals) if strict_vals else None,
         "runtime_sec": round(time.time() - t0, 1),
         "results_file": str(jsonl_path),
+        "rerank": args.rerank,
     }
+    if args.expand_citations:
+        summary["citation_graph"] = str(args.citation_graph)
+        summary["citation_directions"] = args.citation_directions
+        summary["n_questions_with_neighbors"] = n_questions_with_neighbors
+        summary["mean_neighbors_per_question"] = (
+            sum(expansion_neighbor_counts) / len(expansion_neighbor_counts)
+            if expansion_neighbor_counts else 0.0
+        )
+        summary["max_neighbors_per_question"] = (
+            max(expansion_neighbor_counts) if expansion_neighbor_counts else 0
+        )
+    if args.rerank:
+        def _q(xs: list[float], p: float) -> float:
+            if not xs:
+                return 0.0
+            xs_sorted = sorted(xs)
+            i = max(0, min(len(xs_sorted) - 1, int(round(p * (len(xs_sorted) - 1)))))
+            return xs_sorted[i]
+        summary["rerank_model"] = args.rerank_model
+        summary["retrieve_k"] = args.retrieve_k
+        summary["latency_ms"] = {
+            "retrieve_p50": round(_q(retrieve_latency_ms, 0.5), 2),
+            "retrieve_p95": round(_q(retrieve_latency_ms, 0.95), 2),
+            "rerank_p50": round(_q(rerank_latency_ms, 0.5), 2),
+            "rerank_p95": round(_q(rerank_latency_ms, 0.95), 2),
+            "total_p50": round(_q(
+                [r + c for r, c in zip(retrieve_latency_ms, rerank_latency_ms)], 0.5
+            ), 2),
+            "total_p95": round(_q(
+                [r + c for r, c in zip(retrieve_latency_ms, rerank_latency_ms)], 0.95
+            ), 2),
+        }
     if args.mode == "section-oracle":
         summary["match_threshold_oracle"] = args.match_threshold_oracle
         summary["n_oracle_routed"] = n_oracle_routed
