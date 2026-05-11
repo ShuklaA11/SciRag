@@ -1,0 +1,17 @@
+{
+  "run_name": "week4_bge_smoke50",
+  "git_commit": "54fef0a",
+  "n_total_dev_questions": 1005,
+  "n_evaluated": 50,
+  "n_with_evidence": 48,
+  "n_skipped_no_corpus_this_run": 0,
+  "n_done_before_this_run": 0,
+  "k": 5,
+  "mean_recall_at_k": 0.1885416666666667,
+  "mean_answer_f1": 0.284466070705818,
+  "runtime_sec_this_run": 3389.5,
+  "llm_provider": "ollama",
+  "llm_model": "llama3.1:8b",
+  "embedder": "bge",
+  "index_dir": "data/index/flat_bge"
+}

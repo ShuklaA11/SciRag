@@ -1,0 +1,38 @@
+{
+  "run_name": "week7_multihop_smoke",
+  "metric_version": 2,
+  "match_mode": "fuzzy",
+  "match_threshold": 0.7,
+  "mode": "flat",
+  "k": 5,
+  "embedder": "bge",
+  "index_dir": "data/index/flat_bge_tagged",
+  "n_total_dev": 1005,
+  "n_processed": 10,
+  "n_with_evidence": 10,
+  "n_skipped_no_corpus": 0,
+  "mean_recall_at_k_fuzzy": 0.8416666666666667,
+  "mean_recall_at_k_strict": 0.175,
+  "runtime_sec": 3.9,
+  "results_file": "eval/results/week7_multihop_smoke.jsonl",
+  "rerank": true,
+  "rerank_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+  "retrieve_k": 10,
+  "latency_ms": {
+    "retrieve_p50": 62.03,
+    "retrieve_p95": 1529.02,
+    "rerank_p50": 148.21,
+    "rerank_p95": 320.97,
+    "total_p50": 223.22,
+    "total_p95": 1849.99,
+    "decompose_p50": 0.01,
+    "decompose_p95": 0.05
+  },
+  "multihop": true,
+  "multihop_max_subqs": 4,
+  "multihop_dedup_threshold": 0.85,
+  "mean_sub_questions": 1.0,
+  "sub_question_count_distribution": {
+    "1": 10
+  }
+}

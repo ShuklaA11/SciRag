@@ -1,0 +1,41 @@
+{
+  "run_name": "week7_multihop",
+  "metric_version": 2,
+  "match_mode": "fuzzy",
+  "match_threshold": 0.7,
+  "mode": "flat",
+  "k": 5,
+  "embedder": "bge",
+  "index_dir": "data/index/flat_bge_tagged",
+  "n_total_dev": 1005,
+  "n_processed": 1002,
+  "n_with_evidence": 925,
+  "n_skipped_no_corpus": 3,
+  "mean_recall_at_k_fuzzy": 0.7723003003003003,
+  "mean_recall_at_k_strict": 0.22025654225654226,
+  "runtime_sec": 2486.7,
+  "results_file": "eval/results/week7_multihop.jsonl",
+  "rerank": true,
+  "rerank_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+  "retrieve_k": 10,
+  "latency_ms": {
+    "retrieve_p50": 19.95,
+    "retrieve_p95": 82.18,
+    "rerank_p50": 107.07,
+    "rerank_p95": 274.73,
+    "total_p50": 129.0,
+    "total_p95": 380.42,
+    "decompose_p50": 0.01,
+    "decompose_p95": 5229.15
+  },
+  "multihop": true,
+  "multihop_max_subqs": 4,
+  "multihop_dedup_threshold": 0.85,
+  "mean_sub_questions": 1.0538922155688624,
+  "sub_question_count_distribution": {
+    "1": 956,
+    "2": 39,
+    "3": 6,
+    "4": 1
+  }
+}

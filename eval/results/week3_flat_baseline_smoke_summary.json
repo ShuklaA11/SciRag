@@ -1,0 +1,16 @@
+{
+  "run_name": "week3_flat_baseline_smoke",
+  "git_commit": "5b1f8dd",
+  "n_total_dev_questions": 1005,
+  "n_evaluated": 10,
+  "n_with_evidence": 10,
+  "n_skipped_no_corpus_this_run": 0,
+  "n_done_before_this_run": 0,
+  "k": 5,
+  "mean_recall_at_k": 0.20833333333333334,
+  "mean_answer_f1": 0.21673168607373708,
+  "runtime_sec_this_run": 191.6,
+  "llm_provider": "ollama",
+  "llm_model": "llama3.1:8b",
+  "index_dir": "data/index/flat"
+}

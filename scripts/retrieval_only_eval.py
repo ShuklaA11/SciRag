@@ -122,6 +122,24 @@ def main() -> None:
         help="Expand retrieval to in-corpus 1-hop citation neighbors.",
     )
     p.add_argument(
+        "--multihop", action="store_true",
+        help="Run multi-hop retrieval: LLM decomposes the question into "
+             "atomic sub-Qs, each retrieves+reranks, results merged and "
+             "re-ranked vs original. Requires --rerank.",
+    )
+    p.add_argument(
+        "--multihop-llm-provider", type=str, default=None,
+        help="Override SCIRAG_LLM_PROVIDER for the decomposer only.",
+    )
+    p.add_argument(
+        "--multihop-dedup-threshold", type=float, default=0.85,
+        help="BGE cosine threshold for dropping near-duplicate sub-Qs.",
+    )
+    p.add_argument(
+        "--multihop-max-subqs", type=int, default=4,
+        help="Cap on sub-questions emitted by the decomposer.",
+    )
+    p.add_argument(
         "--citation-graph",
         type=Path, default=Path("data/citation_graph/graph.pickle"),
         help="Path to the citation-graph pickle.",
@@ -174,6 +192,37 @@ def main() -> None:
         reranker = CrossEncoderReranker(model_name=args.rerank_model)
         print(f"[retrieval_only] reranker loaded: {args.rerank_model} "
               f"on {reranker.device}")
+
+    multihop = None
+    decompose_latency_ms: list[float] = []
+    sub_question_counts: list[int] = []
+    if args.multihop:
+        if not args.rerank:
+            raise SystemExit("--multihop requires --rerank")
+        from src.llm.client import get_client
+        from src.pipeline.bge_embedder import BGEEmbedder
+        from src.retrieval.decomposer import QueryDecomposer
+        from src.retrieval.multihop import MultiHopRetriever
+
+        decomposer_embedder = (
+            flat.embedder if args.embedder == "bge" else BGEEmbedder()
+        )
+        decomposer = QueryDecomposer(
+            llm=get_client(args.multihop_llm_provider),
+            embedder=decomposer_embedder,
+            dedup_threshold=args.multihop_dedup_threshold,
+            max_sub_questions=args.multihop_max_subqs,
+        )
+        multihop = MultiHopRetriever(
+            decomposer=decomposer,
+            flat_index=flat,
+            reranker=reranker,
+            retrieve_k=args.retrieve_k,
+            top_k=args.k,
+        )
+        print(f"[retrieval_only] multihop enabled "
+              f"(max_subqs={args.multihop_max_subqs}, "
+              f"dedup={args.multihop_dedup_threshold})")
 
     expander = None
     if args.expand_citations:
@@ -289,25 +338,37 @@ def main() -> None:
             expansion_neighbor_counts.append(len(expansion_neighbors))
             if expansion_neighbors:
                 n_questions_with_neighbors += 1
-            retrieved = flat.search(
-                q["question"], k=fetch_k,
-                paper_ids=paper_ids,
-                section_types=section_filter,
-            )
-            t_retrieve = time.time() - t_q0
 
+            sub_questions: list[str] = []
             ce_scores: list[float] = []
-            t_rerank = 0.0
-            if args.rerank and retrieved:
-                t_r0 = time.time()
-                ranked = reranker.rerank(q["question"], retrieved, top_k=args.k)
-                t_rerank = time.time() - t_r0
-                retrieved = [r.chunk for r in ranked]
-                ce_scores = [r.ce_score for r in ranked]
-            elif args.rerank:
-                retrieved = retrieved[: args.k]
+            if multihop is not None:
+                retrieved, mh_meta = multihop.retrieve(
+                    q["question"], paper_ids=paper_ids,
+                    section_types=section_filter,
+                )
+                sub_questions = mh_meta["sub_questions"]
+                decompose_latency_ms.append(mh_meta["decompose_ms"])
+                sub_question_counts.append(mh_meta["n_sub_questions"])
+                t_retrieve = mh_meta["retrieve_ms"] / 1000.0
+                t_rerank = mh_meta["rerank_ms"] / 1000.0
             else:
-                retrieved = retrieved[: args.k]
+                retrieved = flat.search(
+                    q["question"], k=fetch_k,
+                    paper_ids=paper_ids,
+                    section_types=section_filter,
+                )
+                t_retrieve = time.time() - t_q0
+                t_rerank = 0.0
+                if args.rerank and retrieved:
+                    t_r0 = time.time()
+                    ranked = reranker.rerank(
+                        q["question"], retrieved, top_k=args.k,
+                    )
+                    t_rerank = time.time() - t_r0
+                    retrieved = [r.chunk for r in ranked]
+                    ce_scores = [r.ce_score for r in ranked]
+                else:
+                    retrieved = retrieved[: args.k]
 
             texts = [r["text"] for r in retrieved]
             retrieve_latency_ms.append(round(t_retrieve * 1000, 2))
@@ -343,6 +404,9 @@ def main() -> None:
                 "expand_citations": args.expand_citations,
                 "expansion_neighbors": expansion_neighbors,
                 "expansion_neighbor_count": len(expansion_neighbors),
+                "multihop": args.multihop,
+                "sub_questions": sub_questions,
+                "n_sub_questions": len(sub_questions),
             }
             jf.write(json.dumps(row) + "\n")
 
@@ -407,6 +471,26 @@ def main() -> None:
                 [r + c for r, c in zip(retrieve_latency_ms, rerank_latency_ms)], 0.95
             ), 2),
         }
+    if args.multihop:
+        summary["multihop"] = True
+        summary["multihop_max_subqs"] = args.multihop_max_subqs
+        summary["multihop_dedup_threshold"] = args.multihop_dedup_threshold
+        summary["mean_sub_questions"] = (
+            sum(sub_question_counts) / len(sub_question_counts)
+            if sub_question_counts else 0.0
+        )
+        summary["sub_question_count_distribution"] = {
+            n: sub_question_counts.count(n)
+            for n in sorted(set(sub_question_counts))
+        }
+        # _q is defined inside the rerank branch above, which --multihop
+        # requires; safe to reuse here.
+        summary["latency_ms"]["decompose_p50"] = round(
+            _q(decompose_latency_ms, 0.5), 2,
+        )
+        summary["latency_ms"]["decompose_p95"] = round(
+            _q(decompose_latency_ms, 0.95), 2,
+        )
     if args.mode == "section-oracle":
         summary["match_threshold_oracle"] = args.match_threshold_oracle
         summary["n_oracle_routed"] = n_oracle_routed
