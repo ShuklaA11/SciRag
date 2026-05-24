@@ -4,6 +4,33 @@ Per-component eval runs land here. Each run produces a `<name>.jsonl` (per-quest
 
 ## Locked baselines
 
+### `week9_scifact_zeroshot` — SciFact claim verification, zero-shot NLI w/ oracle evidence
+
+| | |
+|---|---|
+| Commit | `519ce92` |
+| Eval set | SciFact dev, 340 `(claim, cited_doc)` pairs from 300 claims |
+| Premise | Full abstract of the cited doc (oracle — no retrieval) |
+| Hypothesis | Claim text |
+| Model | `MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli` (~750MB), MPS |
+| Label map | HF `id2label` -> SciFact: ENTAIL→SUPPORT, NEUTRAL→NEI, CONTRADICT→CONTRADICT |
+| NEI gate | If `max(P(SUP), P(CON)) < 0.5` -> NEI (untuned default) |
+| **Label accuracy** | **0.691** |
+| Macro F1 | 0.676 |
+| Per-class F1 | SUPPORT 0.690 / CONTRADICT 0.603 / NEI 0.734 |
+| Gold dist | SUPPORT 138 / CONTRADICT 71 / NEI 131 |
+| Pred dist | SUPPORT 117 / CONTRADICT 65 / NEI 158 |
+| Wall time | 43s on M1 Pro MPS |
+
+**Interpretation.** Lands slightly below the PLAN.md ~72% zero-shot anchor — expected for a FEVER-ANLI checkpoint that has never seen scientific abstracts. Per-class F1 is balanced (no collapse onto a single class); CONTRADICT is hardest (0.60), which is typical for scientific NLI where refuting a claim requires fine-grained quantitative reasoning. NEI is mildly over-predicted (158 vs 131 gold), suggesting the 0.5 threshold is slightly too conservative; **threshold tuning is deliberately deferred to SB9.3** so we don't cherry-pick on dev. This is the anchor every Week 9 follow-up (SB9.2 BM25 retrieval, SB9.3 SciFact fine-tune) measures deltas from.
+
+**Caveats — read before quoting externally**
+
+1. **Oracle premise.** Each pair uses the full cited abstract as the premise. Real-world claim verification has to first *find* the abstract; SB9.2 measures the BM25-retrieval gap on the full 5,183-doc corpus.
+2. **Threshold not tuned.** 0.5 is the unprincipled default. SB9.3 will tune on train.
+3. **3-class accuracy on 3-class gold.** Standard SciFact has more nuanced abstract-level + sentence-level F1 (Wadden 2020). Our metric is simpler and not directly comparable to leaderboard numbers; it is comparable across our own Week 9 sub-tasks.
+4. **Single deterministic forward pass.** No seed variance to report.
+
 ### `week7_multihop` — query decomposition + multi-hop retrieval (NEGATIVE on headline, micro-positive on subset)
 
 | | |

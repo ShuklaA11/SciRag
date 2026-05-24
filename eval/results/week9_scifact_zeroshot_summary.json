@@ -1,0 +1,32 @@
+{
+  "n_pairs": 340,
+  "accuracy": 0.6911764705882353,
+  "macro_f1": 0.6755670895809304,
+  "per_class_f1": {
+    "SUPPORT": 0.6901960784313725,
+    "CONTRADICT": 0.6029411764705882,
+    "NEI": 0.7335640138408305
+  },
+  "gold_label_dist": {
+    "NEI": 131,
+    "SUPPORT": 138,
+    "CONTRADICT": 71
+  },
+  "pred_label_dist": {
+    "NEI": 158,
+    "CONTRADICT": 65,
+    "SUPPORT": 117
+  },
+  "runtime_sec": 42.95,
+  "run_name": "week9_scifact_zeroshot",
+  "results_file": "eval/results/week9_scifact_zeroshot.jsonl",
+  "git_commit": "519ce92",
+  "model_name": "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli",
+  "device": "mps",
+  "nei_threshold": 0.5,
+  "batch_size": 16,
+  "claims_path": "data/datasets/scifact/claims_dev.json",
+  "corpus_path": "data/datasets/scifact/corpus.json",
+  "limit": null,
+  "n_missing_docs": 0
+}

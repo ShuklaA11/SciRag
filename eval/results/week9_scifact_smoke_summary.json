@@ -1,0 +1,32 @@
+{
+  "n_pairs": 20,
+  "accuracy": 0.7,
+  "macro_f1": 0.6944444444444443,
+  "per_class_f1": {
+    "SUPPORT": 0.75,
+    "CONTRADICT": 0.6666666666666665,
+    "NEI": 0.6666666666666666
+  },
+  "gold_label_dist": {
+    "NEI": 7,
+    "SUPPORT": 8,
+    "CONTRADICT": 5
+  },
+  "pred_label_dist": {
+    "NEI": 8,
+    "CONTRADICT": 4,
+    "SUPPORT": 8
+  },
+  "runtime_sec": 4.05,
+  "run_name": "week9_scifact_smoke",
+  "results_file": "eval/results/week9_scifact_smoke.jsonl",
+  "git_commit": "519ce92",
+  "model_name": "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli",
+  "device": "mps",
+  "nei_threshold": 0.5,
+  "batch_size": 16,
+  "claims_path": "data/datasets/scifact/claims_dev.json",
+  "corpus_path": "data/datasets/scifact/corpus.json",
+  "limit": 20,
+  "n_missing_docs": 0
+}
