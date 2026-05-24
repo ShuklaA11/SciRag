@@ -4,6 +4,63 @@ Per-component eval runs land here. Each run produces a `<name>.jsonl` (per-quest
 
 ## Locked baselines
 
+### `week9_scifact_bm25` — SciFact end-to-end: BM25 retrieval + zero-shot NLI (k-sweep)
+
+| | |
+|---|---|
+| Eval set | SciFact dev, 340 `(claim, cited_doc)` pairs from 300 claims |
+| Index | BM25 (rank-bm25 Okapi) over title + abstract, all 5,183 corpus docs |
+| Tokeniser | Lowercase + alnum-word split (no stemming, no stopword removal) |
+| NLI | Same model + threshold as SB9.1 oracle (`MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli`, NEI threshold 0.5) |
+| Miss policy | If gold cited_doc ∉ top-k retrieved → predict NEI (honest abstention) |
+| Index build | 0.7s on M1 Pro |
+| Retrieval time | ~6s for all 300 claims at any k |
+| NLI time | 20-35s on MPS, scaling with hits per claim |
+
+**k-sweep headline numbers**
+
+| k | retrieval recall@k | end-to-end acc | hit-only acc | macro F1 |
+|---:|---:|---:|---:|---:|
+| 1  | 0.462 | 0.609 | 0.643 | 0.564 |
+| 3  | 0.629 | 0.635 | 0.640 | 0.600 |
+| 5  | **0.694** | **0.659** | **0.652** | **0.628** |
+| 10 | 0.756 | 0.671 | 0.658 | 0.643 |
+| oracle (SB9.1) | 1.000 | 0.691 | 0.691 | 0.676 |
+
+**Per-class retrieval recall** (BM25 is uneven across gold classes)
+
+| gold | recall@5 | recall@10 |
+|---|---:|---:|
+| SUPPORT (138 pairs) | 0.877 | 0.920 |
+| CONTRADICT (71 pairs) | 0.761 | 0.817 |
+| **NEI (131 pairs)** | **0.466** | **0.550** |
+
+NEI pairs are claims cited to docs that were *not* annotated as evidence — the cited doc is only tangentially related, so BM25 with claim-query naturally doesn't find it. On the pairs that matter for actual verification (SUPPORT + CONTRADICT), recall@5 is **0.838** and recall@10 is **0.885**.
+
+**Failure attribution (apples-to-apples).** Oracle (SB9.1) accuracy restricted to the k=5 hit subset is **0.6525 — identical to BM25 hit-only accuracy (0.6525, delta = 0.0000)**. When BM25 finds the gold doc, the retrieved abstract IS the cited abstract, and NLI behaves identically. *All* of SB9.2's accuracy drop vs SB9.1 oracle comes from retrieval-miss → NEI substitution, none from "BM25 surfaced a worse doc."
+
+**Confusion matrix on k=5 hit subset** (NLI failures given retrieval succeeded)
+
+| gold \\ pred | SUPPORT | CONTRADICT | NEI |
+|---|---:|---:|---:|
+| SUPPORT (121)   | 64.5% | 10.7% | **24.8%** |
+| CONTRADICT (54) | **20.4%** | 57.4% | 22.2% |
+| NEI (61)        | 16.4% | 9.8%  | 73.8% |
+
+Two dominant model failure modes: SUPPORT→NEI (under-confident entailment, 25% leak) and CONTRADICT→SUPPORT (sign reversal, 20% leak). The latter is the deeper bug — vanilla MNLI/FEVER training does not teach the negation cues used in scientific abstracts. **SB9.3 fine-tuning targets CONTRADICT recall specifically** (currently 0.574 hit-only) as its pre-registered success metric.
+
+**Reproducing**
+
+```bash
+python scripts/run_scifact_with_retrieval.py --run-name week9_scifact_bm25 --k-sweep 1,3,5,10
+python scripts/analyze_scifact_subsets.py
+```
+
+Subset analysis (`scripts/analyze_scifact_subsets.py`) recomputes the per-class retrieval recall, confusion matrix, and oracle-on-hit-subset comparison directly from the JSONLs — no model load needed.
+
+---
+
+
 ### `week9_scifact_zeroshot` — SciFact claim verification, zero-shot NLI w/ oracle evidence
 
 | | |

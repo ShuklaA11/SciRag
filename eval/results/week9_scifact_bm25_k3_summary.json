@@ -1,0 +1,42 @@
+{
+  "k": 3,
+  "n_pairs": 340,
+  "n_unique_claims": 300,
+  "retrieval_recall_at_k": 0.6294117647058823,
+  "n_retrieval_hits": 214,
+  "n_retrieval_misses": 126,
+  "accuracy": 0.6352941176470588,
+  "hit_accuracy": 0.6401869158878505,
+  "macro_f1": 0.5997728724240766,
+  "per_class_f1": {
+    "SUPPORT": 0.6200873362445414,
+    "CONTRADICT": 0.47863247863247865,
+    "NEI": 0.7005988023952097
+  },
+  "gold_label_dist": {
+    "NEI": 131,
+    "SUPPORT": 138,
+    "CONTRADICT": 71
+  },
+  "pred_label_dist": {
+    "NEI": 203,
+    "SUPPORT": 91,
+    "CONTRADICT": 46
+  },
+  "retrieval_sec": 5.9,
+  "nli_sec": 27.0,
+  "runtime_sec": 32.9,
+  "run_name": "week9_scifact_bm25_k3",
+  "results_file": "eval/results/week9_scifact_bm25_k3.jsonl",
+  "git_commit": "50a9a4c",
+  "model_name": "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli",
+  "device": "mps",
+  "nei_threshold": 0.5,
+  "batch_size": 16,
+  "claims_path": "data/datasets/scifact/claims_dev.json",
+  "corpus_path": "data/datasets/scifact/corpus.json",
+  "limit": null,
+  "n_missing_docs": 0,
+  "n_corpus_docs": 5183,
+  "retriever": "bm25_okapi_title_plus_abstract"
+}
