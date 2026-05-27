@@ -4,6 +4,33 @@ Per-component eval runs land here. Each run produces a `<name>.jsonl` (per-quest
 
 ## Locked baselines
 
+### `week9_scifact_finetune` — SciFact NLI fine-tune (DEFERRED, infrastructure-bound)
+
+| | |
+|---|---|
+| Target metric | CONTRADICT recall on k=5 hit subset: 0.574 -> >= 0.70 (pre-registered in SB9.2) |
+| Secondary    | End-to-end accuracy at k=5: 0.659 -> >= 0.72 |
+| Plan         | Fine-tune `MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli` on SciFact train (~900 pairs, 4 epochs, AdamW, stratified 10% val split) |
+| Status       | **Not run.** Scaffolding shipped in `scripts/train_nli.py` + `tests/test_train_nli.py`; final fine-tune deferred to GPU. |
+
+**Why deferred.** Two independent failure modes on M1 Pro local hardware:
+
+1. **MPS numerical instability.** DeBERTa-v2 disentangled attention produces `grad_norm=nan` within ~20 training steps on Apple Silicon MPS, regardless of learning rate (tested 5e-6, 1e-5, 2e-5) or gradient clipping (`max_grad_norm=1.0`). The forward pass is stable — eval/inference on MPS works (this is what the SB9.1 zero-shot run does). Only backprop blows up.
+
+2. **CPU is too slow.** A single backward step on DeBERTa-v3-base at seq_len=512 measures ~4 minutes on CPU. A full 4-epoch run on 900 train pairs (batch=4 → ~900 steps) extrapolates to **~60 hours** — incompatible with iterative experimentation.
+
+Both findings are reproducible from the diagnostics in `scripts/train_nli.py` (forward pass returns sane loss ~0.88; backward + AdamW step hangs at ~4 min/step on CPU and NaNs out at step ~20 on MPS).
+
+**What ships anyway.**
+* `scripts/train_nli.py` — Trainer scaffolding (CLI, dataset builder, stratified split, `compute_metrics` closure, label-map inversion). Tested via `tests/test_train_nli.py` (7 unit tests; heavy end-to-end gated behind `SCIRAG_RUN_HEAVY=1`).
+* The data prep pipeline is hardware-independent: stratified train/val split keeps all 3 classes in val (SUPPORT 50:1 majority would otherwise dominate at random sampling), label IDs are mapped from SciFact strings via the same `_build_label_map` used by SB9.1 inference, so the trained checkpoint loads through `NLIClassifier(model_name=<path>)` with zero caller changes.
+* Pre-registered success metrics are locked here so a future GPU run cannot retroactively pick a friendlier target.
+
+**Honest framing.** The Week 9 deliverable is the *retrieval-as-bottleneck* attribution from SB9.1 + SB9.2 (oracle 0.691 → BM25 k=5 0.659, with -3.2pp fully explained by miss-as-NEI). The fine-tune was meant to lift the NLI ceiling on the hit subset; that lift is the natural continuation of this work on appropriate hardware. PLAN.md "Phase 3 may need cloud compute" anticipated this exact case.
+
+---
+
+
 ### `week9_scifact_bm25` — SciFact end-to-end: BM25 retrieval + zero-shot NLI (k-sweep)
 
 | | |
