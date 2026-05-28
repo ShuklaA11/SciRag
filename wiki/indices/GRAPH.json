@@ -76,6 +76,181 @@
       "label": "Contextual LSTM (CLSTM) models for Large scale NLP tasks"
     },
     {
+      "id": "1602.07618",
+      "type": "paper",
+      "label": "From quantum foundations via natural language meaning to a theory of everything"
+    },
+    {
+      "id": "1602.08741",
+      "type": "paper",
+      "label": "Gibberish Semantics: How Good is Russian Twitter in Word Semantic Similarity Task?"
+    },
+    {
+      "id": "1603.00968",
+      "type": "paper",
+      "label": "MGNC-CNN: A Simple Approach to Exploiting Multiple Word Embeddings for Sentence Classification"
+    },
+    {
+      "id": "1603.01417",
+      "type": "paper",
+      "label": "Dynamic Memory Networks for Visual and Textual Question Answering"
+    },
+    {
+      "id": "1603.01514",
+      "type": "paper",
+      "label": "A Bayesian Model of Multilingual Unsupervised Semantic Role Induction"
+    },
+    {
+      "id": "1603.01987",
+      "type": "paper",
+      "label": "A matter of words: NLP for quality evaluation of Wikipedia medical articles"
+    },
+    {
+      "id": "1603.04513",
+      "type": "paper",
+      "label": "Multichannel Variable-Size Convolution for Sentence Classification"
+    },
+    {
+      "id": "1603.04553",
+      "type": "paper",
+      "label": "Unsupervised Ranking Model for Entity Coreference Resolution"
+    },
+    {
+      "id": "1603.07044",
+      "type": "paper",
+      "label": "Recurrent Neural Network Encoder with Attention for Community Question Answering"
+    },
+    {
+      "id": "1603.08594",
+      "type": "paper",
+      "label": "Prepositional Attachment Disambiguation Using Bilingual Parsing and Alignments"
+    },
+    {
+      "id": "1603.09631",
+      "type": "paper",
+      "label": "Data Collection for Interactive Learning through the Dialog"
+    },
+    {
+      "id": "1604.00117",
+      "type": "paper",
+      "label": "Domain Adaptation of Recurrent Neural Networks for Natural Language Understanding"
+    },
+    {
+      "id": "1604.00125",
+      "type": "paper",
+      "label": "AttSum: Joint Learning of Focusing and Summarization with Neural Attention"
+    },
+    {
+      "id": "1604.00400",
+      "type": "paper",
+      "label": "Revisiting Summarization Evaluation for Scientific Articles"
+    },
+    {
+      "id": "1604.00727",
+      "type": "paper",
+      "label": "Character-Level Question Answering with Attention"
+    },
+    {
+      "id": "1604.03114",
+      "type": "paper",
+      "label": "Conversational Flow in Oxford-style Debates"
+    },
+    {
+      "id": "1604.05372",
+      "type": "paper",
+      "label": "Clustering Comparable Corpora of Russian and Ukrainian Academic Texts: Word Embeddings and Semantic Fingerprints"
+    },
+    {
+      "id": "1604.05781",
+      "type": "paper",
+      "label": "What we write about when we write about causality: Features of causal statements across large-scale social discourse"
+    },
+    {
+      "id": "1604.06076",
+      "type": "paper",
+      "label": "Question Answering via Integer Programming over Semi-Structured Knowledge"
+    },
+    {
+      "id": "1604.07236",
+      "type": "paper",
+      "label": "Towards Real-Time, Country-Level Location Classification of Worldwide Tweets"
+    },
+    {
+      "id": "1604.08504",
+      "type": "paper",
+      "label": "Detecting \\\"Smart\\\" Spammers On Social Network: A Topic Model Approach"
+    },
+    {
+      "id": "1605.03481",
+      "type": "paper",
+      "label": "Tweet2Vec: Character-Based Distributed Representations for Social Media"
+    },
+    {
+      "id": "1605.04655",
+      "type": "paper",
+      "label": "Joint Learning of Sentence Embeddings for Relevance and Entailment"
+    },
+    {
+      "id": "1605.05134",
+      "type": "paper",
+      "label": "A Semi-automatic Method for Efficient Detection of Stories on Social Media"
+    },
+    {
+      "id": "1605.06083",
+      "type": "paper",
+      "label": "Stereotyping and Bias in the Flickr30K Dataset"
+    },
+    {
+      "id": "1605.07333",
+      "type": "paper",
+      "label": "Combining Recurrent and Convolutional Neural Networks for Relation Classification"
+    },
+    {
+      "id": "1605.07683",
+      "type": "paper",
+      "label": "[unknown title]"
+    },
+    {
+      "id": "1605.08675",
+      "type": "paper",
+      "label": "Boosting Question Answering by Deep Entity Recognition"
+    },
+    {
+      "id": "1606.00189",
+      "type": "paper",
+      "label": "Neural Network Translation Models for Grammatical Error Correction"
+    },
+    {
+      "id": "1606.01404",
+      "type": "paper",
+      "label": "Generating Natural Language Inference Chains"
+    },
+    {
+      "id": "1606.01433",
+      "type": "paper",
+      "label": "Brundlefly at SemEval-2016 Task 12: Recurrent Neural Networks vs. Joint Inference for Clinical Temporal Information Extraction"
+    },
+    {
+      "id": "1606.02006",
+      "type": "paper",
+      "label": "Incorporating Discrete Translation Lexicons into Neural Machine Translation"
+    },
+    {
+      "id": "1606.02891",
+      "type": "paper",
+      "label": "Edinburgh Neural Machine Translation Systems for WMT 16"
+    },
+    {
+      "id": "1606.03676",
+      "type": "paper",
+      "label": "External Lexical Information for Multilingual Part-of-Speech Tagging"
+    },
+    {
+      "id": "1606.04631",
+      "type": "paper",
+      "label": "Bidirectional Long-Short Term Memory for Video Description"
+    },
+    {
       "id": "attention_is_all_you_need",
       "type": "paper",
       "label": "Provided proper attribution is provided, Google hereby grants permission to reproduce the tables and figures in this paper solely for use in journalistic or scholarly works. Attention Is All You Need"
