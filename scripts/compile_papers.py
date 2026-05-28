@@ -34,6 +34,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.llm.client import get_client
+from src.wiki.incremental import (
+    decide,
+    flag_stale_concepts,
+    load_state,
+    save_state,
+    update_state,
+)
 from src.wiki.summarizer import summarize_paper
 
 CANONICAL = [
@@ -46,6 +53,8 @@ CANONICAL = [
 GROBID_ROOT = Path("data/grobid_output")
 QASPER_DIR_NAME = "qasper"
 DEFAULT_OUTPUT = Path("wiki/papers")
+DEFAULT_CONCEPTS = Path("wiki/concepts")
+DEFAULT_WIKI_ROOT = Path("wiki")
 HISTORY_CSV = "compile_history.csv"
 RUN_LOG = ".run_log.json"
 
@@ -154,6 +163,11 @@ def main() -> None:
     ap.add_argument("--grobid-root", type=Path, default=GROBID_ROOT)
     ap.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT)
     ap.add_argument("--rebuild", action="store_true", help="Overwrite existing .md files.")
+    ap.add_argument("--wiki-root", type=Path, default=DEFAULT_WIKI_ROOT,
+                    help="Directory holding .state.json for incremental compilation.")
+    ap.add_argument("--concepts-dir", type=Path, default=DEFAULT_CONCEPTS,
+                    help="Concepts directory to flag stale articles in when a "
+                    "source paper's TEI hash changes.")
     ap.add_argument("--llm-provider", type=str, default=None)
     ap.add_argument("--llm-model", type=str, default=None)
     ap.add_argument(
@@ -180,27 +194,39 @@ def main() -> None:
     print(f"[compile_papers] {len(papers)} papers -> {args.output_dir}")
     print(f"[compile_papers] model: {model_name}")
 
+    state = load_state(args.wiki_root)
     run_log: list[dict] = []
     new_stems: list[str] = []
+    changed_ids: set[str] = set()
     n_ok = n_parse_error = n_empty = n_skipped = 0
 
     t0 = time.time()
     for stem, xml_path in papers:
         md_path = args.output_dir / f"{stem}.md"
-        if md_path.exists() and not args.rebuild:
-            print(f"  [skip] {stem}")
+        tei = xml_path.read_text()
+        decision = decide(
+            stem, tei, state,
+            md_path_exists=md_path.exists(),
+            force_rebuild=args.rebuild,
+        )
+        if not decision.needs_compile:
+            if decision.reason == "bootstrap":
+                state = update_state(state, stem, tei)
+            print(f"  [skip:{decision.reason}] {stem}")
             n_skipped += 1
-            run_log.append({"stem": stem, "status": "skipped"})
+            run_log.append({"stem": stem, "status": "skipped", "reason": decision.reason})
             continue
 
-        print(f"  [..] {stem}", flush=True)
-        tei = xml_path.read_text()
+        print(f"  [..:{decision.reason}] {stem}", flush=True)
         result = summarize_paper(tei, arxiv_id=stem, llm_client=client, model_name=model_name)
         md_path.write_text(result["markdown"])
 
         status = result["status"]
         if status == "ok":
             n_ok += 1
+            state = update_state(state, stem, tei)
+            if decision.reason == "changed":
+                changed_ids.add(stem)
         elif status == "parse_error":
             n_parse_error += 1
         elif status == "empty_tei":
@@ -211,9 +237,18 @@ def main() -> None:
         run_log.append({
             "stem": stem,
             "status": status,
+            "reason": decision.reason,
             "latency_ms": result["latency_ms"],
             "raw_output_preview": result.get("raw_output"),
         })
+
+    save_state(args.wiki_root, state)
+    stale_markers = flag_stale_concepts(args.concepts_dir, changed_ids)
+    if stale_markers:
+        print(f"\n[compile_papers] flagged {len(stale_markers)} concept(s) as stale:")
+        for m in stale_markers:
+            print(f"  - {m}")
+        print("  re-run scripts/compile_concepts.py --rebuild on those slugs to refresh.")
 
     elapsed = time.time() - t0
     summary = {
