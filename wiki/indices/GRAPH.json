@@ -274,7 +274,158 @@
       "id": "scibert",
       "type": "paper",
       "label": "SCIBERT: A Pretrained Language Model for Scientific Text"
+    },
+    {
+      "id": "bert",
+      "type": "concept",
+      "label": "bert"
+    },
+    {
+      "id": "bleu",
+      "type": "concept",
+      "label": "bleu"
+    },
+    {
+      "id": "cnns",
+      "type": "concept",
+      "label": "cnns"
+    },
+    {
+      "id": "gru",
+      "type": "concept",
+      "label": "gru"
+    },
+    {
+      "id": "lstm",
+      "type": "concept",
+      "label": "lstm"
+    },
+    {
+      "id": "nlp",
+      "type": "concept",
+      "label": "nlp"
+    },
+    {
+      "id": "rnns",
+      "type": "concept",
+      "label": "rnns"
     }
   ],
-  "edges": []
+  "edges": [
+    {
+      "source": "bert",
+      "target": "bert",
+      "kind": "depends_on"
+    },
+    {
+      "source": "bert",
+      "target": "scibert",
+      "kind": "depends_on"
+    },
+    {
+      "source": "bleu",
+      "target": "1606.02891",
+      "kind": "depends_on"
+    },
+    {
+      "source": "bleu",
+      "target": "attention_is_all_you_need",
+      "kind": "depends_on"
+    },
+    {
+      "source": "cnns",
+      "target": "1603.00968",
+      "kind": "depends_on"
+    },
+    {
+      "source": "cnns",
+      "target": "1606.04631",
+      "kind": "depends_on"
+    },
+    {
+      "source": "gru",
+      "target": "1603.01417",
+      "kind": "depends_on"
+    },
+    {
+      "source": "gru",
+      "target": "1605.03481",
+      "kind": "depends_on"
+    },
+    {
+      "source": "lstm",
+      "target": "1602.06291",
+      "kind": "depends_on"
+    },
+    {
+      "source": "lstm",
+      "target": "1603.07044",
+      "kind": "depends_on"
+    },
+    {
+      "source": "lstm",
+      "target": "1604.00117",
+      "kind": "depends_on"
+    },
+    {
+      "source": "lstm",
+      "target": "1604.00727",
+      "kind": "depends_on"
+    },
+    {
+      "source": "lstm",
+      "target": "1606.01404",
+      "kind": "depends_on"
+    },
+    {
+      "source": "lstm",
+      "target": "1606.03676",
+      "kind": "depends_on"
+    },
+    {
+      "source": "lstm",
+      "target": "1606.04631",
+      "kind": "depends_on"
+    },
+    {
+      "source": "lstm",
+      "target": "elmo",
+      "kind": "depends_on"
+    },
+    {
+      "source": "nlp",
+      "target": "1601.06081",
+      "kind": "depends_on"
+    },
+    {
+      "source": "nlp",
+      "target": "1602.06291",
+      "kind": "depends_on"
+    },
+    {
+      "source": "nlp",
+      "target": "1603.01987",
+      "kind": "depends_on"
+    },
+    {
+      "source": "nlp",
+      "target": "bert",
+      "kind": "depends_on"
+    },
+    {
+      "source": "nlp",
+      "target": "scibert",
+      "kind": "depends_on"
+    },
+    {
+      "source": "rnns",
+      "target": "1606.01404",
+      "kind": "depends_on"
+    },
+    {
+      "source": "rnns",
+      "target": "attention_is_all_you_need",
+      "kind": "depends_on"
+    }
+  ]
 }

@@ -1,0 +1,58 @@
+{
+  "model": "llama3.1:8b",
+  "elapsed_sec": 97.5,
+  "n_ok": 4,
+  "n_parse_error": 0,
+  "n_empty": 0,
+  "n_skipped": 3,
+  "n_missing": 0,
+  "entries": [
+    {
+      "concept": "lstm",
+      "slug": "lstm",
+      "status": "skipped"
+    },
+    {
+      "concept": "nlp",
+      "slug": "nlp",
+      "status": "skipped"
+    },
+    {
+      "concept": "bert",
+      "slug": "bert",
+      "status": "skipped"
+    },
+    {
+      "concept": "bleu",
+      "slug": "bleu",
+      "status": "ok",
+      "latency_ms": 14409,
+      "n_evidence": 2,
+      "raw_output_preview": null
+    },
+    {
+      "concept": "cnns",
+      "slug": "cnns",
+      "status": "ok",
+      "latency_ms": 46475,
+      "n_evidence": 2,
+      "raw_output_preview": null
+    },
+    {
+      "concept": "gru",
+      "slug": "gru",
+      "status": "ok",
+      "latency_ms": 15377,
+      "n_evidence": 2,
+      "raw_output_preview": null
+    },
+    {
+      "concept": "rnns",
+      "slug": "rnns",
+      "status": "ok",
+      "latency_ms": 21191,
+      "n_evidence": 2,
+      "raw_output_preview": null
+    }
+  ]
+}

@@ -62,3 +62,10 @@ Alphabetical index of all wiki entries.
 
 ## Concepts
 
+- [[bert]] — bert
+- [[bleu]] — bleu
+- [[cnns]] — cnns
+- [[gru]] — gru
+- [[lstm]] — lstm
+- [[nlp]] — nlp
+- [[rnns]] — rnns

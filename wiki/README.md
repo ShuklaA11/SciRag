@@ -31,40 +31,66 @@ Compile run: `llama3.1:8b` via Ollama (CPU), 4h 22min wall time on the
 | Parse errors | 0 | **0** ✅ |
 | Empty TEI | < 5% | **0/41 = 0%** ✅ |
 
-### Gate B — sampled quality review (SB10.1)
+### Gate B — sampled quality review (SB10.1) — ✅ PASS
 
 Sample 10 of the 45 newly compiled papers (seed=42, deterministic via
 `scripts/compile_papers.py --sample-review 10`). Apply the same rubric
-as `wiki/papers/REVIEW_NOTES.md`:
+as `wiki/papers/REVIEW_NOTES.md`. Numeric claims cross-checked against
+the source Grobid TEI; full per-paper scores in
+`wiki/papers/REVIEW_NOTES.md`.
 
 | | Target | Result |
 |---|---|---|
-| Numerical hallucinations across the sample | 0 / 10 | _pending review_ |
-| Non-numerical drift (wrong methods, dataset mixups) | ≤ 1 / 10 | _pending review_ |
-| Mean accuracy | ≥ 4.5 / 5 | _pending review_ |
-| Mean coverage | ≥ 4.5 / 5 | _pending review_ |
+| Numerical hallucinations across the sample | 0 / 10 | **0 / 10** ✅ |
+| Non-numerical drift (wrong methods, dataset mixups) | ≤ 1 / 10 | **1 / 10** ✅ |
+| Mean accuracy | ≥ 4.5 / 5 | **4.7 / 5** ✅ |
+| Mean coverage | ≥ 4.5 / 5 | **4.7 / 5** ✅ |
 
 **Stop condition.** Any numerical hallucination triggers SB10.1 halt
 and forces the Llama → Qwen-14B or Anthropic swap per the LLM-choice
-decision in `wiki/papers/REVIEW_NOTES.md`.
+decision in `wiki/papers/REVIEW_NOTES.md`. Not triggered: all four
+explicit numeric claims in the sample (21% CLSTM, 10% cQA MAP, 10% PP
+attachment, order-of-magnitude MGNC-CNN training time) exact-match the
+TEI.
 
-### Gate C — concept article coverage (SB10.2 + SB10.3)
+### Gate C — concept article coverage (SB10.2 + SB10.3) — ⚠️ RE-SCOPED (corpus-limited)
+
+**The original targets (locked 2026-05-27) are infeasible on the 55-paper
+corpus and are kept here unmoved, per the lock convention.** The 50-paper
+QASPER slice is *alphabetical*, not concept-clustered, so cross-paper
+concept co-occurrence is sparse: the extractor surfaces only **8**
+candidates at `min_paper_count=2` (11 even if every section is scanned,
+**3** at `min_paper_count=3`). Reaching ≥ 30 candidates / 15–20 articles
+would require densifying the corpus — 1,166 QASPER TEIs exist in
+`data/grobid_output/qasper/`, only 55 are compiled — not tuning the
+regex. Forcing the number would pad the wiki with noise. Re-scoped to
+compile every genuinely-supported concept and report honestly, the same
+convention as the Week 4/6/7 negative results.
+
+| | Original target | Re-scoped result |
+|---|---|---|
+| Concept candidates surfaced (`min_paper_count=2`) | ≥ 30 | **8** — corpus-limited ⚠️ |
+| Concept articles compiled | 15–20 | **7** — every supported candidate (`nlp`/`natural language processing` dedup'd to `nlp`) |
+| Articles with status=ok | (implied) | **7 / 7 = 100%** ✅ |
+| Articles citing ≥ 3 source papers | ≥ 90% | **1 / 7 = 14%** — only `lstm` (8 papers); the other 6 appear in exactly 2 ⚠️ |
+| Articles with parse_error status | 0 | **0** ✅ |
+
+Compiled concepts: `lstm` (8 papers), `nlp` (5), `bert` (2), `bleu` (2),
+`cnns` (2), `gru` (2), `rnns` (2). Run: `llama3.1:8b` via Ollama (CPU),
+161s wall for 7 articles, 0 parse errors. Spot-reviewed for hallucinated
+arxiv_ids (none — Key Papers are auto-derived from evidence) and invented
+numbers (none cited). **Lift path:** compile more QASPER papers to raise
+cross-paper concept density, then re-extract and re-compile.
+
+### Gate D — wiki integrity (SB10.4) — ✅ PASS (papers + concepts)
 
 | | Target | Result |
 |---|---|---|
-| Concept candidates surfaced (`min_paper_count=2`) | ≥ 30 | _pending compile_ |
-| Concept articles compiled | 15–20 | _pending_ |
-| Articles citing ≥ 3 source papers (verified via grep on Key Papers section) | ≥ 90% | _pending_ |
-| Articles with parse_error status | 0 | _pending_ |
-
-### Gate D — wiki integrity (SB10.4) — ✅ PASS (papers); concepts pending compile
-
-| | Target | Result |
-|---|---|---|
-| All 5 indices regenerate from scratch | yes | ✅ (0.02s on 55-paper snapshot) |
-| Every `[[arxiv_id]]` link resolves to a file in `wiki/papers/` | 100% | ✅ (0 broken links over 55 papers, all indices) |
-| Every `[[concept_slug]]` link resolves to a file in `wiki/concepts/` | 100% | ✅ vacuous (no concepts yet — re-run after SB10.3 compile) |
-| GRAPH.json edges only point to existing nodes | 100% | ✅ (enforced in `render_graph`) |
+| All 5 indices regenerate from scratch | yes | ✅ (0.02s on 55-paper + 7-concept snapshot) |
+| Every `[[arxiv_id]]` link resolves to a file in `wiki/papers/` | 100% | ✅ (0 broken over 151 wikilinks across papers, concepts, indices) |
+| Every `[[concept_slug]]` link resolves to a file in `wiki/concepts/` | 100% | ✅ (re-verified after SB10.3 compile — 7 concepts, 0 broken) |
+| GRAPH.json edges only point to existing nodes | 100% | ✅ (62 nodes, 23 edges, 0 dangling) |
+| Concept `depends_on:` refs all in live paper set | 100% | ✅ (0 bad refs) |
 
 ### Gate E — incremental loop (SB10.5) — ✅ PASS
 
