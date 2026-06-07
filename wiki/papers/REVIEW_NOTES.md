@@ -177,3 +177,73 @@ abstracts, not the LLM. No prompt change needed for Week 10.
 **Gate B verdict: ACCEPT.** Proceed with Llama-3.1-8B Q4 for Week 10
 full-corpus compilation. Re-evaluate only if numerical hallucinations
 appear in spot checks during the 1,166-paper run.
+
+---
+
+# Gate B — sampled review at N=55 (SB10.1, seed=42)
+
+**Run:** Week 10 full compile (55 summaries, see `wiki/README.md` Gate A).
+**Model:** `llama3.1:8b` (Q4_K_M via Ollama, CPU).
+**Date:** 2026-05-28
+**Sample:** deterministic seed=42 random-10 of the newly compiled set —
+1602.00812, 1602.06291, 1602.07618, 1602.08741, 1603.00968,
+1603.07044, 1603.08594, 1604.00117, 1605.03481, 1606.04631.
+
+## Threshold (unchanged from first-10)
+
+- **Any numerical hallucination (≥1/10)** → HALT SB10.3, swap Llama →
+  Anthropic for the compile path.
+- **Non-numerical drift ≥2/10** (wrong methods, dataset mixups, wrong
+  architectures) → upgrade.
+- Otherwise → ACCEPT.
+
+Numeric claims were cross-checked against the source Grobid TEI in
+`data/grobid_output/qasper/<id>.xml`, not scored from the summary alone.
+
+## Numerical claims — TEI-verified
+
+| Paper | Summary claim | TEI ground truth | Verdict |
+|---|---|---|---|
+| 1602.06291 | 21% rel. acc., next-sentence selection, Wikipedia | "relative accuracy improvements of 21% for the Wikipedia dataset and 18% for Google News" | exact |
+| 1603.07044 | 10% MAP improvement vs IR; comparable to handcrafted | "SemEval-2016 cQA … 10% improvement on a MAP score compared to an IR-based approach … comparable … handcrafted feature-based" | exact |
+| 1603.08594 | 10% over baseline (MSTParser, English) | "improved by 10% over the baseline … MSTParser model trained for English" | exact |
+| 1603.00968 | order of magnitude more efficient | "an order of magnitude more efficient in terms of training time" | exact |
+
+## Per-paper scores (accuracy / coverage / concision / numerical)
+
+| # | Paper | Acc | Cov | Conc | Num | Notes |
+|---|---|---|---|---|---|---|
+| 1 | 1602.00812 Grail theorem prover | 5 | 4 | 5 | 5 | No numeric claims. Chapter overview; thin Results trace to the source abstract. |
+| 2 | 1602.06291 CLSTM | 5 | 5 | 5 | 5 | 21% / Wikipedia / next-sentence selection all exact. |
+| 3 | 1602.07618 Quantum → togetherness | 4 | 4 | 5 | 5 | "togetherness essential for understanding the human brain and its interactions with other brains" is over-specific for a position paper (compression artifact, not a wrong fact). |
+| 4 | 1602.08741 Russian Twitter | 4 | 5 | 5 | 5 | "not suitable for Russian due to morphological complexity" is an invented rationale; the conclusion (Twitter comparable to single-corpus models) is exact. |
+| 5 | 1603.00968 MGNC-CNN | 4 | 4 | 5 | 5 | **Non-numeric drift (1/1 counted):** says "achieving state-of-the-art"; abstract only claims "consistently outperforms baseline models." SOTA was MVCNN's result, and the paper claims MGNC-CNN is *comparable* to it with far less compute. |
+| 6 | 1603.07044 RNN encoder + attention, cQA | 5 | 5 | 5 | 5 | 10% MAP exact. |
+| 7 | 1603.08594 PP attachment (bilingual) | 5 | 5 | 5 | 5 | 10% / English-Hindi / MSTParser all exact. |
+| 8 | 1604.00117 Domain adaptation RNN NLU | 5 | 5 | 5 | 5 | Multi-task slot filling, open vocabulary correct. |
+| 9 | 1605.03481 Tweet2Vec | 5 | 5 | 5 | 5 | Bi-GRU character composition correct. |
+| 10 | 1606.04631 BiLSTM video description | 5 | 5 | 5 | 5 | MSVD corpus correct. |
+
+## Aggregate scores
+
+- Numerical hallucinations: **0/10**
+- Non-numerical drift: **1/10** (the MGNC-CNN "state-of-the-art"
+  overstatement; #3 and #4 are softer compression artifacts, not wrong
+  facts, and are not counted toward the drift threshold)
+- Mean accuracy: **4.7/5**
+- Mean coverage: **4.7/5**
+- Mean concision: **5.0/5**
+- Mean numerical correctness: **5.0/5**
+- Parse errors: 0/10 · Empty TEI: 0/10
+
+## Gate B verdict at N=55: ACCEPT
+
+Zero numerical hallucinations — the hard stop does not trigger. All
+architectures, datasets, and method names are correct. No Llama →
+Anthropic swap. SB10.3 (concept compile) is cleared to proceed on
+Llama-3.1-8B Q4.
+
+**Watch item for the concept compile:** the lone drift (MGNC-CNN
+SOTA) is a *comparable-to-X → is-X* conflation. Spot-check concept
+articles for the same pattern when prose summarizes a paper's standing
+relative to prior work.

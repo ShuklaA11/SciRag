@@ -1,71 +1,288 @@
 {
   "model": "llama3.1:8b",
-  "elapsed_sec": 237.6,
-  "n_papers": 10,
-  "n_ok": 10,
+  "paper_set": "all",
+  "limit": 50,
+  "elapsed_sec": 0.1,
+  "n_papers": 55,
+  "n_ok": 0,
   "n_parse_error": 0,
   "n_empty_tei": 0,
-  "n_skipped": 0,
+  "n_skipped": 55,
   "entries": [
     {
       "stem": "attention_is_all_you_need",
-      "status": "ok",
-      "latency_ms": 32951,
-      "raw_output_preview": null
+      "status": "skipped",
+      "reason": "bootstrap"
     },
     {
       "stem": "bert",
-      "status": "ok",
-      "latency_ms": 23301,
-      "raw_output_preview": null
+      "status": "skipped",
+      "reason": "bootstrap"
     },
     {
       "stem": "elmo",
-      "status": "ok",
-      "latency_ms": 21518,
-      "raw_output_preview": null
+      "status": "skipped",
+      "reason": "bootstrap"
     },
     {
       "stem": "gpt2",
-      "status": "ok",
-      "latency_ms": 24010,
-      "raw_output_preview": null
+      "status": "skipped",
+      "reason": "bootstrap"
     },
     {
       "stem": "scibert",
-      "status": "ok",
-      "latency_ms": 25003,
-      "raw_output_preview": null
+      "status": "skipped",
+      "reason": "bootstrap"
     },
     {
       "stem": "1503.00841",
-      "status": "ok",
-      "latency_ms": 24681,
-      "raw_output_preview": null
+      "status": "skipped",
+      "reason": "bootstrap"
     },
     {
       "stem": "1601.00901",
-      "status": "ok",
-      "latency_ms": 22428,
-      "raw_output_preview": null
+      "status": "skipped",
+      "reason": "bootstrap"
     },
     {
       "stem": "1601.01705",
-      "status": "ok",
-      "latency_ms": 22340,
-      "raw_output_preview": null
+      "status": "skipped",
+      "reason": "bootstrap"
     },
     {
       "stem": "1601.02166",
-      "status": "ok",
-      "latency_ms": 22339,
-      "raw_output_preview": null
+      "status": "skipped",
+      "reason": "bootstrap"
     },
     {
       "stem": "1601.02403",
-      "status": "ok",
-      "latency_ms": 18725,
-      "raw_output_preview": null
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1601.02543",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1601.04012",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1601.06068",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1601.06081",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1601.06738",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1602.00812",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1602.01208",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1602.01595",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1602.03661",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1602.06291",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1602.07618",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1602.08741",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1603.00968",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1603.01417",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1603.01514",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1603.01987",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1603.04513",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1603.04553",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1603.07044",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1603.08594",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1603.09631",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1604.00117",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1604.00125",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1604.00400",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1604.00727",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1604.03114",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1604.05372",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1604.05781",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1604.06076",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1604.07236",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1604.08504",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1605.03481",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1605.04655",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1605.05134",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1605.06083",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1605.07333",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1605.07683",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1605.08675",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1606.00189",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1606.01404",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1606.01433",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1606.02006",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1606.02891",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1606.03676",
+      "status": "skipped",
+      "reason": "bootstrap"
+    },
+    {
+      "stem": "1606.04631",
+      "status": "skipped",
+      "reason": "bootstrap"
     }
   ]
 }
