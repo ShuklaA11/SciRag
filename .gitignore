@@ -47,6 +47,10 @@ logs/
 # Local working notes (not for the public repo)
 CLAUDE.md
 PLAN.md
+plan.md
+plan-*.md
+planning.md
+plans/
 
 # Router artifacts (regenerable from the section-tagged index)
 data/router/
