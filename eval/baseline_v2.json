@@ -1,0 +1,76 @@
+{
+  "manifest_version": 1,
+  "description": "Canonical frozen v2 baseline — single source of truth for the ablation spine. Regression-guarded by tests/test_baseline_v2_manifest.py, which re-aggregates each cell's stored per-query jsonl and asserts it matches these numbers. This guards the aggregation/metric code during v3 Phase A refactoring. It does NOT re-run the pipeline (that needs Docker + Ollama + a full re-eval); a full re-run against this manifest is the separate spine re-validation done once after Phase A.",
+  "metric": {
+    "version": 2,
+    "match_mode": "fuzzy",
+    "match_threshold": 0.7,
+    "recall_k": 5,
+    "n_with_evidence": 925,
+    "note": "recall_at_k_strict is SQuAD-comparable (headline); recall_at_k_fuzzy is lenient. Aggregation = mean of non-None per-question recall over QASPER dev questions with non-empty gold evidence."
+  },
+  "decisions": {
+    "canonical_embedder": "bge",
+    "config_B_setting": "section router t0.3 n1 (honest: ~neutral vs flat). Oracle routing recorded separately as headroom, not as an ablation cell.",
+    "config_E_status": "UNRESOLVED"
+  },
+  "retrieval_cells": {
+    "A_flat_baseline": {
+      "description": "Flat chunking (BGE), no routing, no expansion — pure baseline",
+      "source_jsonl": "eval/results/week5_tagged_flat.jsonl",
+      "n_with_evidence": 925,
+      "mean_recall_at_k_fuzzy": 0.7384997854997855,
+      "mean_recall_at_k_strict": 0.20130673530673532
+    },
+    "B_section_router": {
+      "description": "A + section-aware chunking + query router (t0.3, top_n=1) — ~neutral vs flat at best setting",
+      "source_jsonl": "eval/results/week5_tagged_router_t0.3_n1.jsonl",
+      "n_with_evidence": 925,
+      "mean_recall_at_k_fuzzy": 0.7357970827970828,
+      "mean_recall_at_k_strict": 0.20157700557700559
+    },
+    "B_oracle_ceiling": {
+      "description": "Reference ceiling (oracle section routing) — routing headroom, NOT an ablation cell",
+      "role": "reference_ceiling",
+      "source_jsonl": "eval/results/week5_tagged_oracle.jsonl",
+      "n_with_evidence": 925,
+      "mean_recall_at_k_fuzzy": 0.865997854997855,
+      "mean_recall_at_k_strict": 0.26053196053196054
+    },
+    "C_citation_expand_rerank": {
+      "description": "B + citation-neighborhood expansion + cross-encoder rerank (retrieve_k=10)",
+      "source_jsonl": "eval/results/week6_rerank_k10.jsonl",
+      "n_with_evidence": 925,
+      "mean_recall_at_k_fuzzy": 0.7712192192192192,
+      "mean_recall_at_k_strict": 0.22052681252681253
+    },
+    "D_multihop": {
+      "description": "B + multi-hop reasoning (LangGraph decomposition) over reranked retrieval",
+      "source_jsonl": "eval/results/week7_multihop.jsonl",
+      "n_with_evidence": 925,
+      "mean_recall_at_k_fuzzy": 0.7723003003003003,
+      "mean_recall_at_k_strict": 0.22025654225654226
+    },
+    "E_full_system": {
+      "description": "Full system (B + C + D + verification)",
+      "status": "UNRESOLVED",
+      "source_jsonl": null,
+      "note": "No consolidated full-system retrieval run exists. Retrieval leg approximates D; verification leg is measured separately on SciFact (see verification). Schedule a full-system run to resolve."
+    }
+  },
+  "verification": {
+    "scifact_zeroshot": {
+      "description": "Zero-shot DeBERTa NLI (MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli) on SciFact abstract-level labels",
+      "source_jsonl": "eval/results/week9_scifact_zeroshot.jsonl",
+      "n_pairs": 340,
+      "accuracy": 0.6911764705882353,
+      "macro_f1": 0.6755670895809304
+    },
+    "scifact_finetuned": {
+      "description": "Fine-tuned NLI on SciFact — the +8-12pp target over zero-shot",
+      "status": "UNRESOLVED",
+      "source_jsonl": null,
+      "note": "No fine-tuned accuracy summary present. Config E's verification target is unmet until this exists."
+    }
+  }
+}
