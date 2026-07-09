@@ -12,7 +12,7 @@
   "decisions": {
     "canonical_embedder": "bge",
     "config_B_setting": "section router t0.3 n1 (honest: ~neutral vs flat). Oracle routing recorded separately as headroom, not as an ablation cell.",
-    "config_E_status": "retrieval NOT_RUN (runnable, expected ~0.77 plateau); verification DEFERRED (CUDA-bound, documented in eval/results/README.md)"
+    "config_E_status": "retrieval MEASURED = 0.692 fuzzy (WORSE than C/D ~0.77 — citation expansion dilutes in-paper recall@5); verification DEFERRED (CUDA-bound, documented in eval/results/README.md)"
   },
   "retrieval_cells": {
     "A_flat_baseline": {
@@ -53,9 +53,12 @@
     },
     "E_full_system": {
       "description": "Full-system retrieval: B + citation expansion (C) + multi-hop (D), stacked",
-      "status": "NOT_RUN",
-      "source_jsonl": null,
-      "note": "Distinct config never run: C (week6) and D (week7) were measured separately, and week7 multihop had expand_citations OFF, so 'both stacked' has no number. Runnable via `retrieval_only_eval.py --rerank --expand-citations --multihop` (~45-60 min; needs Qdrant + Ollama + bge-tagged index + citation graph). Expected to plateau near C (0.771) and D (0.772): multihop rarely fired (mean sub-qs 1.05). Verification leg = scifact_finetuned below."
+      "status": "MEASURED",
+      "source_jsonl": "eval/results/configE_full_expand_multihop.jsonl",
+      "n_with_evidence": 925,
+      "mean_recall_at_k_fuzzy": 0.6921857571857571,
+      "mean_recall_at_k_strict": 0.19402230802230802,
+      "note": "FINDING: stacking is WORSE than either component alone (C=0.771, D=0.772 fuzzy). Citation expansion is the culprit — on QASPER gold evidence is in-paper, so 1-hop neighbor chunks dilute precision@5 (cf. week6_rerank_k10_expand=0.691, near-identical). Multihop adds nothing (mean sub-qs 1.05). Honest ablation result: more components != better; expansion helps cross-paper F1 (its intended purpose) but hurts in-paper recall@5, so the 'full system' should NOT enable expansion for QASPER-style retrieval. Verification leg = scifact_finetuned below."
     }
   },
   "verification": {
