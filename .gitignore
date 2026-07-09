@@ -12,6 +12,7 @@ venv/
 data/qdrant/
 data/citation_graph/*.pickle
 data/cache/*.db
+data/hub.db
 data/datasets/
 data/grobid_output/
 data/index/
