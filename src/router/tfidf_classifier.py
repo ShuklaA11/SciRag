@@ -24,16 +24,12 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import MultiLabelBinarizer
 
-SECTION_TYPES: tuple[str, ...] = (
-    "abstract",
-    "introduction",
-    "related_work",
-    "method",
-    "experiments",
-    "results",
-    "conclusion",
-    "other",
-)
+from src.domain import active_profile
+
+# Router classes are the active domain's section taxonomy (v3 Phase A) — the
+# same source the chunker uses, so the two can no longer drift. Bound at import
+# for use as the default `classes`; saved models carry their own class list.
+SECTION_TYPES: tuple[str, ...] = active_profile().section_types
 
 
 @dataclass(frozen=True)
