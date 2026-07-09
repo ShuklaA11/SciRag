@@ -14,44 +14,27 @@ from __future__ import annotations
 
 import re
 
+from src.domain import active_profile
+from src.domain.profile import DomainProfile
+
 from .grobid_client import extract_abstract, extract_sections, extract_title
 
-SECTION_TYPES = (
-    "abstract",
-    "introduction",
-    "related_work",
-    "method",
-    "experiments",
-    "results",
-    "conclusion",
-    "other",
-)
+# Section taxonomy + head-matching rules now come from the active DomainProfile
+# (v3 Phase A). SECTION_TYPES stays a module-level alias, bound to the active
+# profile at import (NLP by default), for backward-compatible importers.
+SECTION_TYPES = active_profile().section_types
 
-# Order matters: more-specific patterns first; "introduction" runs late so
-# heads like "Model Overview" claim "method" before introduction's
-# "overview" alternative fires.
-_SECTION_PATTERNS: list[tuple[str, re.Pattern]] = [
-    ("abstract",     re.compile(r"\babstract\b", re.IGNORECASE)),
-    ("related_work", re.compile(
-        r"\brelated\s+work\b|\bbackground\b|\bprior\s+work\b|\bliterature\b",
-        re.IGNORECASE)),
-    ("method",       re.compile(
-        r"\bmethod|\bapproach|\barchitecture|\bmodel\b|\balgorithm|"
-        r"\bformulation|\bproposed\b",
-        re.IGNORECASE)),
-    ("experiments",  re.compile(
-        r"\bexperiment|\bsetup\b|\bimplementation\b|\btraining\b|\bdataset",
-        re.IGNORECASE)),
-    ("results",      re.compile(
-        r"\bresult|\bevaluation\b|\bfinding|\banalysis\b|\bablation",
-        re.IGNORECASE)),
-    ("conclusion",   re.compile(
-        r"\bconclusion|\bdiscussion\b|\bfuture\s+work\b|\blimitation",
-        re.IGNORECASE)),
-    ("introduction", re.compile(
-        r"\bintroduction\b|\bmotivation\b|\boverview\b",
-        re.IGNORECASE)),
-]
+# Compiled patterns cached per profile. Order matters (more-specific first) and
+# is preserved from the profile's declaration order.
+_PATTERN_CACHE: dict[str, list[tuple[str, re.Pattern[str]]]] = {}
+
+
+def _patterns_for(profile: DomainProfile) -> list[tuple[str, re.Pattern[str]]]:
+    cached = _PATTERN_CACHE.get(profile.name)
+    if cached is None:
+        cached = profile.compiled_patterns()
+        _PATTERN_CACHE[profile.name] = cached
+    return cached
 
 # Strip leading numbering like "3.", "4.1", "IV.", "1)" etc.
 _LEAD_NUM_RE = re.compile(
@@ -71,7 +54,7 @@ def section_type_for_head(head: str) -> str:
     s = _LEAD_NUM_RE.sub("", head).strip()
     if not s or s == "[untitled]":
         return "other"
-    for label, pat in _SECTION_PATTERNS:
+    for label, pat in _patterns_for(active_profile()):
         if pat.search(s):
             return label
     return "other"
