@@ -44,3 +44,42 @@ NLP_ML = DomainProfile(
 )
 
 register(NLP_ML)
+
+
+# --- Biomedical -------------------------------------------------------------
+# A deliberately different taxonomy: clinical/biomed papers are strict IMRaD
+# with Background/Methods/Discussion buckets and no ML-isms (related_work,
+# experiments, ablation). This is what makes the profile do real work — the
+# same head classifies differently depending on the active domain (e.g.
+# "Discussion" -> conclusion under NLP, -> discussion here).
+_BIOMED_SECTION_PATTERNS: tuple[tuple[str, str], ...] = (
+    ("abstract", r"\babstract\b"),
+    ("background", r"\bbackground\b"),
+    ("methods", r"\bmethod|\bmaterials\b|\bstudy\s+design\b|\bparticipants\b|\bpatients\b|\bprocedure|\bstatistical\s+analysis\b"),
+    ("results", r"\bresult|\bfinding|\boutcome"),
+    ("discussion", r"\bdiscussion\b|\binterpretation\b"),
+    ("conclusion", r"\bconclusion|\blimitation"),
+    ("introduction", r"\bintroduction\b|\bmotivation\b"),
+)
+
+BIOMEDICAL = DomainProfile(
+    name="biomedical",
+    section_types=(
+        "abstract",
+        "introduction",
+        "background",
+        "methods",
+        "results",
+        "discussion",
+        "conclusion",
+        "other",
+    ),
+    section_patterns=_BIOMED_SECTION_PATTERNS,
+    embedder_name="specter2",  # scientific-general, citation-based; already available
+    verification_strategy="nli",
+    verification_model="MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli",  # validated on SciFact (eval/baseline_v2.json)
+    data_sources=("pubmed", "pmc", "semantic_scholar", "clinicaltrials_gov"),
+    eval_benchmark="scifact",
+)
+
+register(BIOMEDICAL)
