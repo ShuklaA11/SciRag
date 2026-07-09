@@ -12,7 +12,7 @@
   "decisions": {
     "canonical_embedder": "bge",
     "config_B_setting": "section router t0.3 n1 (honest: ~neutral vs flat). Oracle routing recorded separately as headroom, not as an ablation cell.",
-    "config_E_status": "UNRESOLVED"
+    "config_E_status": "retrieval NOT_RUN (runnable, expected ~0.77 plateau); verification DEFERRED (CUDA-bound, documented in eval/results/README.md)"
   },
   "retrieval_cells": {
     "A_flat_baseline": {
@@ -52,10 +52,10 @@
       "mean_recall_at_k_strict": 0.22025654225654226
     },
     "E_full_system": {
-      "description": "Full system (B + C + D + verification)",
-      "status": "UNRESOLVED",
+      "description": "Full-system retrieval: B + citation expansion (C) + multi-hop (D), stacked",
+      "status": "NOT_RUN",
       "source_jsonl": null,
-      "note": "No consolidated full-system retrieval run exists. Retrieval leg approximates D; verification leg is measured separately on SciFact (see verification). Schedule a full-system run to resolve."
+      "note": "Distinct config never run: C (week6) and D (week7) were measured separately, and week7 multihop had expand_citations OFF, so 'both stacked' has no number. Runnable via `retrieval_only_eval.py --rerank --expand-citations --multihop` (~45-60 min; needs Qdrant + Ollama + bge-tagged index + citation graph). Expected to plateau near C (0.771) and D (0.772): multihop rarely fired (mean sub-qs 1.05). Verification leg = scifact_finetuned below."
     }
   },
   "verification": {
@@ -67,10 +67,14 @@
       "macro_f1": 0.6755670895809304
     },
     "scifact_finetuned": {
-      "description": "Fine-tuned NLI on SciFact — the +8-12pp target over zero-shot",
-      "status": "UNRESOLVED",
+      "description": "Fine-tuned DeBERTa NLI on SciFact — the verification lift over zero-shot",
+      "status": "DEFERRED_HARDWARE_BOUND",
       "source_jsonl": null,
-      "note": "No fine-tuned accuracy summary present. Config E's verification target is unmet until this exists."
+      "pre_registered_targets": {
+        "contradict_recall_hit_subset": ">=0.70 (from 0.574)",
+        "end_to_end_accuracy_at_k5": ">=0.72 (from 0.659)"
+      },
+      "note": "Not a missing to-do: deliberately deferred, documented in eval/results/README.md (week9_scifact_finetune). DeBERTa-v2 disentangled attention NaNs on Apple Silicon MPS within ~20 steps; CPU fine-tune ~60h (~4 min/step). Scaffolding shipped + tested (scripts/train_nli.py, tests/test_train_nli.py); runs on CUDA with no code change. Shipped verification number remains zero-shot 0.691."
     }
   }
 }
