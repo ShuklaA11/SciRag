@@ -7,6 +7,7 @@ is a narrator only. Reports are always per-claim — never a single novelty
 scalar, which would be gameable.
 """
 
+from src.ideas.claims import ClaimDecomposer
 from src.ideas.verdict import (
     BUCKETS,
     CONTRADICTED,
@@ -23,6 +24,7 @@ __all__ = [
     "DEFAULT_NOVELTY_THRESHOLD",
     "ENTAILED",
     "NOVEL",
+    "ClaimDecomposer",
     "ClaimVerdict",
     "assess_claim",
 ]
