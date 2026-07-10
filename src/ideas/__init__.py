@@ -8,6 +8,7 @@ scalar, which would be gameable.
 """
 
 from src.ideas.claims import ClaimDecomposer
+from src.ideas.engine import Evidence, IdeaEvaluator, IdeaReport, Provenance
 from src.ideas.verdict import (
     BUCKETS,
     CONTRADICTED,
@@ -26,5 +27,9 @@ __all__ = [
     "NOVEL",
     "ClaimDecomposer",
     "ClaimVerdict",
+    "Evidence",
+    "IdeaEvaluator",
+    "IdeaReport",
+    "Provenance",
     "assess_claim",
 ]
