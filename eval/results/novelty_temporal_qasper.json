@@ -1,0 +1,31 @@
+{
+  "run_name": "novelty_temporal_qasper",
+  "cutoff_year": 2018,
+  "k": 5,
+  "nli_model": "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli",
+  "claim_unit": "paper_title",
+  "corpus": "qasper_dev_abstracts_le_cutoff",
+  "git_commit": "572bc80",
+  "metrics": {
+    "cutoff_year": 2018,
+    "in_corpus": {
+      "n": 129,
+      "novel_rate": 0.3875968992248062,
+      "buckets": {
+        "ENTAILED": 58,
+        "CONTRADICTED": 21,
+        "NOVEL": 50
+      }
+    },
+    "held_out": {
+      "n": 114,
+      "novel_rate": 0.6052631578947368,
+      "buckets": {
+        "ENTAILED": 23,
+        "CONTRADICTED": 22,
+        "NOVEL": 69
+      }
+    },
+    "novelty_gap": 0.2176662586699306
+  }
+}
