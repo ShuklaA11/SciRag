@@ -96,4 +96,21 @@ class DirectionProposer:
         items = payload.get("directions")
         if not isinstance(items, list):
             return []
-        return [s.strip() for s in items if isinstance(s, str) and s.strip()]
+        return [d for d in (_coerce_direction(i) for i in items) if d]
+
+
+# Local models often return objects ({"title":..., "description":...}) despite
+# the string-list instruction, so coerce dicts to the most direction-like field
+# rather than dropping them.
+_DIRECTION_KEYS = ("direction", "text", "question", "description", "title")
+
+
+def _coerce_direction(item: object) -> str:
+    if isinstance(item, str):
+        return item.strip()
+    if isinstance(item, dict):
+        for key in _DIRECTION_KEYS:
+            val = item.get(key)
+            if isinstance(val, str) and val.strip():
+                return val.strip()
+    return ""

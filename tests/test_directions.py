@@ -69,3 +69,17 @@ def test_malformed_json_proposes_nothing():
 def test_non_string_items_dropped():
     llm = FakeLLM('{"directions": ["Real direction.", 7, "", "  "]}')
     assert DirectionProposer(llm).propose("t", ["gap"]) == ["Real direction."]
+
+
+def test_object_items_coerced_to_direction_field():
+    # Local models often return {title, description} objects despite the string
+    # instruction — coerce to the most direction-like field instead of dropping.
+    llm = FakeLLM(json.dumps({"directions": [
+        {"title": "Label", "description": "Investigate X under distribution shift."},
+        {"direction": "Probe Y in low-resource settings."},
+        {"unusable": "no known key"},
+    ]}))
+    assert DirectionProposer(llm).propose("t", ["gap"]) == [
+        "Investigate X under distribution shift.",
+        "Probe Y in low-resource settings.",
+    ]
