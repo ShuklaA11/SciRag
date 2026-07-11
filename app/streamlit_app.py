@@ -18,10 +18,15 @@ Re-connecting is ~1ms and single-threaded per rerun.
 from __future__ import annotations
 
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # make sibling `engine` importable
 
 import streamlit as st
+from engine import build_evaluator
 
 from src.hub import HubStore, domain_options
+from src.ideas import CONTRADICTED, ENTAILED, NOVEL
 
 
 def _store() -> HubStore:
@@ -57,11 +62,50 @@ def _projects_page() -> None:
         st.write(f"**{p.name}** — `{p.domain}` · {p.created_at}")
 
 
+_BUCKET_STYLE = {
+    ENTAILED: ("🟢", "already in the literature"),
+    CONTRADICTED: ("🔴", "the corpus contradicts this"),
+    NOVEL: ("🟡", "untested — a novelty gap"),
+}
+
+
+def _render_verdicts(report) -> None:
+    if not report.verdicts:
+        st.info("No claims were extracted from that idea.")
+        return
+    renderers = {ENTAILED: st.success, CONTRADICTED: st.error, NOVEL: st.warning}
+    for v in report.verdicts:
+        icon, gloss = _BUCKET_STYLE.get(v.bucket, ("", ""))
+        renderers.get(v.bucket, st.write)(f"{icon} **{v.bucket}** — {v.claim}  \n_{gloss}_")
+
+
+def _evaluate_page() -> None:
+    st.header("Evaluate idea")
+    projects = _store().list_projects()
+    if not projects:
+        st.info("Create a project first from **New project**.")
+        return
+
+    proj_by_label = {f"{p.name} ({p.domain})": p for p in projects}
+    label = st.selectbox("Project", list(proj_by_label))
+    idea = st.text_area("Research idea")
+    if st.button("Evaluate", type="primary"):
+        if not idea.strip():
+            st.error("Enter an idea to evaluate.")
+            return
+        report = build_evaluator().evaluate(idea)
+        _render_verdicts(report)
+        project = proj_by_label[label]
+        _store().save_evaluation(project.id, report)
+        st.caption(f"Saved evaluation to “{project.name}”.")
+
+
 def main() -> None:
     st.set_page_config(page_title="SciRAG hub", page_icon="🔬")
     page = st.navigation(
         [
             st.Page(_new_project_page, title="New project", default=True),
+            st.Page(_evaluate_page, title="Evaluate idea"),
             st.Page(_projects_page, title="Projects"),
         ]
     )

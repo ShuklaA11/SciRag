@@ -4,6 +4,9 @@ view → core → persistence end to end, independent of list rendering."""
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 import pytest
 
 from src.hub import HubStore
@@ -11,6 +14,7 @@ from src.hub import HubStore
 AppTest = pytest.importorskip("streamlit.testing.v1").AppTest
 
 APP = "app/streamlit_app.py"
+sys.path.insert(0, str(Path("app").resolve()))  # make the app-edge `engine` importable
 
 
 @pytest.fixture
@@ -45,3 +49,22 @@ def test_empty_name_surfaces_error_not_crash(hub_db):
     assert not at.exception
     assert at.error
     assert HubStore(hub_db).list_projects() == []
+
+
+def test_eval_engine_and_persistence_seam(hub_db, monkeypatch):
+    # The Evaluate-idea page wires build_evaluator() → save_evaluation, then
+    # renders. st.navigation non-default pages aren't AppTest-navigable, so cover
+    # the collaborator seam the page calls (fake engine → per-claim → persisted).
+    monkeypatch.setenv("SCIRAG_FAKE_ENGINE", "1")  # deterministic, no models
+    from engine import build_evaluator
+
+    store = HubStore(hub_db)
+    pid = store.create_project("Target", "nlp_ml").id
+    report = build_evaluator().evaluate("some research idea")
+    store.save_evaluation(pid, report)
+
+    persisted = store.list_evaluations(pid)
+    assert len(persisted) == 1
+    buckets = [v["bucket"] for v in persisted[0].report["verdicts"]]
+    assert buckets == ["ENTAILED", "CONTRADICTED", "NOVEL"]
+    store.close()
