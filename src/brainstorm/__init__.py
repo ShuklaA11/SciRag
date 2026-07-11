@@ -9,5 +9,12 @@ the flow is linear with a stop condition, matching the codebase precedent in
 
 from src.brainstorm.directions import DirectionProposer, gaps_from_verdicts
 from src.brainstorm.frontier import Frontier
+from src.brainstorm.loop import BrainstormLoop, BrainstormReport
 
-__all__ = ["Frontier", "DirectionProposer", "gaps_from_verdicts"]
+__all__ = [
+    "Frontier",
+    "DirectionProposer",
+    "gaps_from_verdicts",
+    "BrainstormLoop",
+    "BrainstormReport",
+]
