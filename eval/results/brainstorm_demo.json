@@ -1,0 +1,27 @@
+{
+  "run_name": "brainstorm_demo",
+  "seed": "diffusion models generate higher-quality text than autoregressive transformers and need less training data for low-resource languages",
+  "iterations": 2,
+  "n_assessed": 5,
+  "max_iters": 2,
+  "batch_size": 3,
+  "k": 5,
+  "nli_model": "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli",
+  "git_commit": "98aa046",
+  "discovered_directions": [
+    {
+      "direction": "Diffusion models can generate higher-quality text than autoregressive transformers.",
+      "bucket": "NOVEL",
+      "best_support": 0.238,
+      "best_contradict": 0.016,
+      "top_evidence": null
+    },
+    {
+      "direction": "Diffusion models require less training data to achieve good results in low-resource languages.",
+      "bucket": "NOVEL",
+      "best_support": 0.212,
+      "best_contradict": 0.064,
+      "top_evidence": null
+    }
+  ]
+}
