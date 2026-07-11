@@ -7,6 +7,7 @@ the flow is linear with a stop condition, matching the codebase precedent in
 ``retrieval.multihop``. The LLM narrates; retrieval + NLI decide what's a gap.
 """
 
+from src.brainstorm.directions import DirectionProposer, gaps_from_verdicts
 from src.brainstorm.frontier import Frontier
 
-__all__ = ["Frontier"]
+__all__ = ["Frontier", "DirectionProposer", "gaps_from_verdicts"]
