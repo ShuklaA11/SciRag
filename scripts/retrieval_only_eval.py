@@ -104,6 +104,11 @@ def main() -> None:
         help="If 'other' is in the predicted set, drop section restriction.",
     )
     p.add_argument(
+        "--router-exclude-other", action="store_true", default=False,
+        help="Drop 'other' from router predictions before filtering, forcing "
+             "routing to the best real section(s) instead of falling back.",
+    )
+    p.add_argument(
         "--rerank", action="store_true",
         help="Apply cross-encoder reranking to retrieved candidates.",
     )
@@ -300,6 +305,8 @@ def main() -> None:
                 if pred is not None:
                     router_labels = list(pred["labels"])
                     router_probs = pred["probabilities"]
+                    if args.router_exclude_other:
+                        router_labels = [lbl for lbl in router_labels if lbl != "other"]
                 if not router_labels:
                     section_filter = None
                     router_status = "fallback_empty"
