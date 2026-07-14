@@ -32,6 +32,7 @@ from src.evaluation.qasper_eval import (  # noqa: E402
     token_set,
 )
 from src.retrieval.flat_index import FlatIndex  # noqa: E402
+from src.router.embedding_router import EmbeddingRouter  # noqa: E402
 from src.router.tfidf_classifier import TfidfRouter  # noqa: E402
 
 # CrossEncoderReranker is imported lazily inside main() to avoid loading
@@ -89,7 +90,11 @@ def main() -> None:
     )
     p.add_argument(
         "--router-path", type=Path, default=Path("data/router/tfidf.joblib"),
-        help="Path to a saved TfidfRouter (only used when mode=section-router).",
+        help="Path to a saved router (only used when mode=section-router).",
+    )
+    p.add_argument(
+        "--router-model", choices=["tfidf", "embedding"], default="tfidf",
+        help="Which router class to load at --router-path.",
     )
     p.add_argument(
         "--router-threshold", type=float, default=0.5,
@@ -171,10 +176,13 @@ def main() -> None:
         for c in flat.chunks:
             chunks_by_paper.setdefault(c["arxiv_id"], []).append(c)
 
-    router: TfidfRouter | None = None
+    router: TfidfRouter | EmbeddingRouter | None = None
     router_predictions: dict[str, dict] = {}
     if args.mode == "section-router":
-        router = TfidfRouter.load(args.router_path)
+        if args.router_model == "embedding":
+            router = EmbeddingRouter.load(args.router_path)
+        else:
+            router = TfidfRouter.load(args.router_path)
         eligible = [q for q in questions if q["paper_id"] in in_corpus]
         if args.limit is not None:
             eligible = eligible[: args.limit]

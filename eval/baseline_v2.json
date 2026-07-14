@@ -29,6 +29,13 @@
       "mean_recall_at_k_fuzzy": 0.7357970827970828,
       "mean_recall_at_k_strict": 0.20157700557700559
     },
+    "B_embed_router": {
+      "description": "R1b improvement cell: B config (t0.3, top_n=1) with the BGE-embedding router (EmbeddingRouter) replacing TF-IDF. Neutral vs flat (0.739): discriminates better than TF-IDF (dev macro-F1 0.376 vs 0.306) but 'other' still wins top-1 for 990/1002 questions, so the other-fallback reverts to flat. New cell alongside frozen B_section_router; frozen cells untouched.",
+      "source_jsonl": "eval/results/week5_embed_router.jsonl",
+      "n_with_evidence": 925,
+      "mean_recall_at_k_fuzzy": 0.739040326040326,
+      "mean_recall_at_k_strict": 0.19995538395538395
+    },
     "B_oracle_ceiling": {
       "description": "Reference ceiling (oracle section routing) — routing headroom, NOT an ablation cell",
       "role": "reference_ceiling",
