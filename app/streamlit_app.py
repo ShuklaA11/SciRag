@@ -27,6 +27,7 @@ from engine import build_evaluator
 
 from src.hub import HubStore, domain_options
 from src.ideas import CONTRADICTED, ENTAILED, NOVEL
+from src.wiki.search import WikiSearchIndex
 
 
 def _store() -> HubStore:
@@ -100,12 +101,33 @@ def _evaluate_page() -> None:
         st.caption(f"Saved evaluation to “{project.name}”.")
 
 
+@st.cache_resource(show_spinner="Indexing the compiled wiki …")
+def _wiki_index() -> WikiSearchIndex:
+    return WikiSearchIndex.from_wiki()
+
+
+def _wiki_search_page() -> None:
+    st.header("Wiki search")
+    index = _wiki_index()
+    st.caption(f"{len(index)} wiki entries (paper summaries + concept articles)")
+    query = st.text_input("Search the compiled wiki")
+    if not query.strip():
+        return
+    hits = index.search(query, k=10)
+    if not hits:
+        st.info("No matches.")
+        return
+    for h in hits:
+        st.write(f"**{h.title}** &nbsp; `{h.kind}` · `{h.ident}` · score {h.score:.1f}")
+
+
 def main() -> None:
     st.set_page_config(page_title="SciRAG hub", page_icon="🔬")
     page = st.navigation(
         [
             st.Page(_new_project_page, title="New project", default=True),
             st.Page(_evaluate_page, title="Evaluate idea"),
+            st.Page(_wiki_search_page, title="Wiki search"),
             st.Page(_projects_page, title="Projects"),
         ]
     )
