@@ -74,6 +74,14 @@
       "mean_recall_at_k_fuzzy": 0.7712192192192192,
       "mean_recall_at_k_strict": 0.22052681252681253
     },
+    "C_rerank_mxbai": {
+      "description": "R2 NEGATIVE (reranker swap): same config as frozen C (flat + cross-encoder rerank, retrieve_k=10) but with mixedbread-ai/mxbai-rerank-base-v1 instead of ms-marco-MiniLM-L-6-v2. Result 0.7600 fuzzy / 0.2211 strict — BELOW frozen C's L-6 (0.7712 / 0.2205) on the headline fuzzy metric (ties on strict, within noise). mxbai was the best of three tested alternatives; all lose to L-6 on fuzzy: L-12 sibling 0.7593, bge-reranker-base (multilingual) 0.7234 (below flat A 0.7380). Conclusion: MiniLM-L-6 is already the sweet spot for this scientific-QA rerank at retrieve_k=10 — bigger (L-12), different-family (bge), and modern-English (mxbai) rerankers all underperform it. Reranker choice is NOT a lever. NOTE: frozen C's description says 'B + citation expansion' but its actual run config was flat+rerank (no router/expansion per its summary) — pre-existing description drift, frozen cell left untouched.",
+      "role": "diagnostic",
+      "source_jsonl": "eval/results/week6_rerank_mxbai.jsonl",
+      "n_with_evidence": 925,
+      "mean_recall_at_k_fuzzy": 0.76001716001716,
+      "mean_recall_at_k_strict": 0.22106735306735306
+    },
     "D_multihop": {
       "description": "B + multi-hop reasoning (LangGraph decomposition) over reranked retrieval",
       "source_jsonl": "eval/results/week7_multihop.jsonl",

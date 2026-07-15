@@ -1,0 +1,29 @@
+{
+  "run_name": "week6_rerank_mxbai",
+  "metric_version": 2,
+  "match_mode": "fuzzy",
+  "match_threshold": 0.7,
+  "mode": "flat",
+  "k": 5,
+  "embedder": "bge",
+  "index_dir": "data/index/flat_bge_tagged",
+  "n_total_dev": 1005,
+  "n_processed": 1002,
+  "n_with_evidence": 925,
+  "n_skipped_no_corpus": 3,
+  "mean_recall_at_k_fuzzy": 0.76001716001716,
+  "mean_recall_at_k_strict": 0.22106735306735306,
+  "runtime_sec": 406.0,
+  "results_file": "eval/results/week6_rerank_mxbai.jsonl",
+  "rerank": true,
+  "rerank_model": "mixedbread-ai/mxbai-rerank-base-v1",
+  "retrieve_k": 10,
+  "latency_ms": {
+    "retrieve_p50": 18.06,
+    "retrieve_p95": 39.59,
+    "rerank_p50": 390.72,
+    "rerank_p95": 504.4,
+    "total_p50": 407.7,
+    "total_p95": 534.77
+  }
+}
