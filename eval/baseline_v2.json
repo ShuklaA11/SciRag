@@ -82,6 +82,14 @@
       "mean_recall_at_k_fuzzy": 0.76001716001716,
       "mean_recall_at_k_strict": 0.22106735306735306
     },
+    "C_rerank_depth_k30": {
+      "description": "R3 NEGATIVE (candidate depth): frozen C config (flat + L-6 rerank) but with retrieve_k=30 instead of 10 — a wider funnel for the reranker to rescue chunks the bi-encoder underranked. Result 0.7685 fuzzy / 0.2159 strict — BELOW frozen C's retrieve_k=10 (0.7712 / 0.2205). Sweep {20,30,50} all land ~0.767-0.769 (saturated): widening the pool slightly HURTS, because deeper candidates add distractors the reranker occasionally promotes over true evidence. k=10 is already optimal. With R2 (reranker model, also negative), both halves of the rerank pipeline are saturated — the C ceiling (~0.771) is not movable by local rerank tuning.",
+      "role": "diagnostic",
+      "source_jsonl": "eval/results/week6_rerank_k30.jsonl",
+      "n_with_evidence": 925,
+      "mean_recall_at_k_fuzzy": 0.7685113685113685,
+      "mean_recall_at_k_strict": 0.21586014586014585
+    },
     "D_multihop": {
       "description": "B + multi-hop reasoning (LangGraph decomposition) over reranked retrieval",
       "source_jsonl": "eval/results/week7_multihop.jsonl",
