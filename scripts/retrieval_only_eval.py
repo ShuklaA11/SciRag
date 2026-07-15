@@ -105,8 +105,11 @@ def main() -> None:
         help="Top-N classes by probability to always include (union with threshold).",
     )
     p.add_argument(
-        "--router-other-fallback", action="store_true", default=True,
-        help="If 'other' is in the predicted set, drop section restriction.",
+        "--router-other-fallback", action=argparse.BooleanOptionalAction,
+        default=True,
+        help="If 'other' is in the predicted set, drop section restriction "
+             "(flat fallback). Use --no-router-other-fallback to instead treat "
+             "'other' as a searchable section (union with predicted specifics).",
     )
     p.add_argument(
         "--router-exclude-other", action="store_true", default=False,

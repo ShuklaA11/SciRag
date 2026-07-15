@@ -36,6 +36,21 @@
       "mean_recall_at_k_fuzzy": 0.739040326040326,
       "mean_recall_at_k_strict": 0.19995538395538395
     },
+    "B_embed_router_no_other": {
+      "description": "R1b.1 DIAGNOSTIC (not a shippable config): embedding router with --router-exclude-other, testing the crude 'never predict other' hack instead of the flat fallback. Recall CRASHES to 0.609 (< flat 0.738), matching TF-IDF's ~0.60 from R1a. This rules out the exclude-other hack, not routing in general: the oracle section set includes 'other' for 45.2% of questions and is 'other'-only for 15.1%, so blanket-excluding 'other' discards evidence that legitimately lives in 'other'-tagged chunks. What R1b established: a LINEAR head (TF-IDF or BGE-embedding) collapses to predicting 'other' top-1 for ~99% of questions — it cannot tell WHEN evidence is section-specific. The oracle (0.866) proves that selective distinction exists in the data; whether a stronger/fine-tuned classifier (R1c) can learn it is UNTESTED. Conclusion: the two cheap configs (fallback→flat, exclude-other→0.609) both fail; realizing headroom needs a selective router, which the linear heads do not provide.",
+      "role": "diagnostic",
+      "source_jsonl": "eval/results/week5_embed_router_no_other.jsonl",
+      "n_with_evidence": 925,
+      "mean_recall_at_k_fuzzy": 0.6088511368511369,
+      "mean_recall_at_k_strict": 0.15348519948519948
+    },
+    "B_embed_router_union": {
+      "description": "R1b.2 IMPROVEMENT: embedding router at the frozen B config (t0.3, top_n=1) but with 'other' treated as a searchable section (--no-router-other-fallback) instead of triggering the flat fallback. Same threshold as frozen B — only the fallback semantics change (flat -> union of predicted labels including 'other'). Result 0.7448 fuzzy / 0.2059 strict: the FIRST section-router config to beat flat A (0.7380 / 0.2016) on both metrics. Mechanism: light filtering drops the lowest-confidence section while keeping 'other', cutting a bit of top-5 dilution without losing the 'other'-bucket evidence. Gain is small (+0.68pt fuzzy over A) because at t0.3 the predicted set is still ~6 sections; higher thresholds filter harder but CRASH (t0.5 -> 0.556) since the linear head can't accurately pick small sets. Realizing the 0.866 oracle headroom is gated on classifier accuracy (R1c fine-tune, untested), but union is the correct routing semantics to pair it with.",
+      "source_jsonl": "eval/results/week5_embed_router_union.jsonl",
+      "n_with_evidence": 925,
+      "mean_recall_at_k_fuzzy": 0.7448447018447019,
+      "mean_recall_at_k_strict": 0.2059013299013299
+    },
     "B_oracle_ceiling": {
       "description": "Reference ceiling (oracle section routing) — routing headroom, NOT an ablation cell",
       "role": "reference_ceiling",
