@@ -40,10 +40,12 @@ class DistilBertRouter:
         model_name: str = MODEL_NAME,
         classes: tuple[str, ...] = SECTION_TYPES,
         device: str = "cpu",
-        epochs: int = 3,
+        epochs: int = 6,
         lr: float = 5e-5,
         batch_size: int = 16,
         max_len: int = MAX_LEN,
+        pos_weight_cap: float = 5.0,
+        warmup_frac: float = 0.1,
     ) -> None:
         self.model_name = model_name
         self.classes = classes
@@ -52,6 +54,8 @@ class DistilBertRouter:
         self.lr = lr
         self.batch_size = batch_size
         self.max_len = max_len
+        self.pos_weight_cap = pos_weight_cap
+        self.warmup_frac = warmup_frac
         self.binarizer = MultiLabelBinarizer(classes=list(classes))
         self.binarizer.fit([list(classes)])
         self._tokenizer = None
@@ -97,17 +101,40 @@ class DistilBertRouter:
         loader = DataLoader(ds, batch_size=self.batch_size, shuffle=True)
         opt = torch.optim.AdamW(self._model.parameters(), lr=self.lr)
 
+        # Class-balanced BCE, but MILD: sqrt(neg/pos) capped at pos_weight_cap.
+        # Raw neg/pos (~54x for 'abstract') pushes the model to predict every
+        # class positive (degenerate 'predict-all'); unweighted collapses rare
+        # classes to zero. sqrt + cap sits between: lift rare classes without
+        # steamrolling to predict-all.
+        pos = y.sum(axis=0)
+        neg = len(y) - pos
+        raw = np.sqrt(neg / np.clip(pos, 1.0, None))
+        pos_weight = torch.tensor(
+            np.clip(raw, None, self.pos_weight_cap), dtype=torch.float32
+        ).to(self.device)
+        criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+
+        # Linear lr warmup then decay — standard for stable transformer
+        # fine-tuning (avoids early large steps wrecking pretrained weights).
+        from transformers import get_linear_schedule_with_warmup
+
+        total_steps = self.epochs * len(loader)
+        scheduler = get_linear_schedule_with_warmup(
+            opt, int(self.warmup_frac * total_steps), total_steps
+        )
+
         self._model.train()
         for _ in range(self.epochs):
             for input_ids, attn, target in loader:
                 opt.zero_grad()
-                out = self._model(
+                logits = self._model(
                     input_ids=input_ids.to(self.device),
                     attention_mask=attn.to(self.device),
-                    labels=target.to(self.device),
-                )
-                out.loss.backward()
+                ).logits
+                loss = criterion(logits, target.to(self.device))
+                loss.backward()
                 opt.step()
+                scheduler.step()
         self._fitted = True
         return self
 

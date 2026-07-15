@@ -51,6 +51,14 @@
       "mean_recall_at_k_fuzzy": 0.7448447018447019,
       "mean_recall_at_k_strict": 0.2059013299013299
     },
+    "B_distilbert_router_union": {
+      "description": "R1c NEGATIVE (CPU budget): fine-tuned DistilBERT router (66M, 6 epochs CPU, sqrt-capped balanced BCE, lr warmup) with union routing at the frozen B config (t0.3/n1). Result 0.6360 fuzzy / 0.1653 strict — BELOW flat A (0.7380) and well below the embedding-union ceiling (0.7448). Two failure modes bracket it: unweighted BCE collapses rare classes to zero; full neg/pos balancing forces predict-all (recovers flat by NOT filtering, ~0.739). The fair middle (this cell) is genuinely discriminative (healthy per-class P/R, macro-F1 0.343) yet routes WRONG when it commits — confident section picks that exclude evidence-bearing chunks. Threshold sweep confirms it asymptotes to flat as threshold->0 (t0.15 -> 0.727) and never exceeds it. Lesson: discrimination != routing accuracy; realizing the 0.866 oracle headroom needs accuracy no CPU-trainable model (linear head OR DistilBERT) achieves. Proper R1c would need GPU-scale training and may still fail (question-text->section is a weak signal). NOTE: distilbert eval requires OMP_NUM_THREADS=1 (faiss/torch OpenMP clash segfaults otherwise). Union (0.7448) remains the local best.",
+      "role": "diagnostic",
+      "source_jsonl": "eval/results/week5_distilbert_router_union.jsonl",
+      "n_with_evidence": 925,
+      "mean_recall_at_k_fuzzy": 0.636003432003432,
+      "mean_recall_at_k_strict": 0.16527670527670527
+    },
     "B_oracle_ceiling": {
       "description": "Reference ceiling (oracle section routing) — routing headroom, NOT an ablation cell",
       "role": "reference_ceiling",

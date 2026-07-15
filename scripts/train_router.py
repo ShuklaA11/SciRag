@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import numpy as np  # noqa: E402
 from sklearn.metrics import classification_report, f1_score  # noqa: E402
 
+from src.router.distilbert_router import DistilBertRouter  # noqa: E402
 from src.router.embedding_router import EmbeddingRouter  # noqa: E402
 from src.router.tfidf_classifier import SECTION_TYPES, TfidfRouter  # noqa: E402
 
@@ -44,7 +45,9 @@ def _load(path: Path, drop_empty: bool) -> tuple[list[str], list[list[str]]]:
 
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--model", choices=["tfidf", "embedding"], default="tfidf")
+    p.add_argument(
+        "--model", choices=["tfidf", "embedding", "distilbert"], default="tfidf"
+    )
     p.add_argument("--train", type=Path, default=Path("data/router/train.jsonl"))
     p.add_argument("--dev", type=Path, default=Path("data/router/dev.jsonl"))
     p.add_argument("--out", type=Path, default=Path("data/router/tfidf.joblib"))
@@ -61,6 +64,8 @@ def main() -> None:
         router = TfidfRouter()
     elif args.model == "embedding":
         router = EmbeddingRouter()
+    elif args.model == "distilbert":
+        router = DistilBertRouter()
     else:  # pragma: no cover - guarded by argparse
         raise ValueError(args.model)
 

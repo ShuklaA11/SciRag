@@ -32,6 +32,7 @@ from src.evaluation.qasper_eval import (  # noqa: E402
     token_set,
 )
 from src.retrieval.flat_index import FlatIndex  # noqa: E402
+from src.router.distilbert_router import DistilBertRouter  # noqa: E402
 from src.router.embedding_router import EmbeddingRouter  # noqa: E402
 from src.router.tfidf_classifier import TfidfRouter  # noqa: E402
 
@@ -93,7 +94,8 @@ def main() -> None:
         help="Path to a saved router (only used when mode=section-router).",
     )
     p.add_argument(
-        "--router-model", choices=["tfidf", "embedding"], default="tfidf",
+        "--router-model", choices=["tfidf", "embedding", "distilbert"],
+        default="tfidf",
         help="Which router class to load at --router-path.",
     )
     p.add_argument(
@@ -179,11 +181,13 @@ def main() -> None:
         for c in flat.chunks:
             chunks_by_paper.setdefault(c["arxiv_id"], []).append(c)
 
-    router: TfidfRouter | EmbeddingRouter | None = None
+    router: TfidfRouter | EmbeddingRouter | DistilBertRouter | None = None
     router_predictions: dict[str, dict] = {}
     if args.mode == "section-router":
         if args.router_model == "embedding":
             router = EmbeddingRouter.load(args.router_path)
+        elif args.router_model == "distilbert":
+            router = DistilBertRouter.load(args.router_path)
         else:
             router = TfidfRouter.load(args.router_path)
         eligible = [q for q in questions if q["paper_id"] in in_corpus]
