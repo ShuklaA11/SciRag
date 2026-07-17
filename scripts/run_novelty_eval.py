@@ -27,6 +27,8 @@ from typing import Any
 from src.evaluation.novelty_eval import arxiv_year, novelty_rates, temporal_split
 from src.hub import current_git_commit
 from src.ideas import Evidence, IdeaEvaluator
+from src.ideas.claims import ClaimDecomposer
+from src.llm.client import get_client
 from src.verification.evidence_retriever import BM25EvidenceRetriever, _doc_text
 from src.verification.nli_classifier import DEFAULT_MODEL, NLIClassifier
 
@@ -54,6 +56,35 @@ class _UnusedDecomposer:
         raise RuntimeError("novelty eval uses evaluate_claims; decomposer is unused")
 
 
+def _abstract_claims(
+    rows: list[tuple[str, str, str, int]],
+    decomposer: ClaimDecomposer,
+    cache_path: Path,
+) -> list[str]:
+    """Flatten each paper's abstract into atomic claims (N1 claim unit).
+
+    Per-paper claims are cached to ``cache_path`` (jsonl, keyed by paper id)
+    and flushed immediately, so a killed run resumes without re-decomposing.
+    """
+    cache: dict[str, list[str]] = {}
+    if cache_path.exists():
+        for line in cache_path.open():
+            if line.strip():
+                row = json.loads(line)
+                cache[row["pid"]] = row["claims"]
+
+    claims: list[str] = []
+    with cache_path.open("a") as cf:
+        for pid, _title, abstract, _year in rows:
+            paper_claims = cache.get(pid)
+            if paper_claims is None:
+                paper_claims = decomposer.decompose(abstract)
+                cf.write(json.dumps({"pid": pid, "claims": paper_claims}) + "\n")
+                cf.flush()
+            claims.extend(paper_claims)
+    return claims
+
+
 def _load_papers(limit: int | None) -> list[tuple[str, str, str, int]]:
     """Return (paper_id, title, abstract, year) for dated dev papers."""
     papers = json.loads(QASPER_DEV.read_text())
@@ -73,6 +104,15 @@ def main() -> None:
     ap.add_argument("--cutoff", type=int, default=2018, help="cutoff year Y")
     ap.add_argument("--k", type=int, default=5, help="evidence docs per claim")
     ap.add_argument("--limit", type=int, default=None, help="cap papers (smoke runs)")
+    ap.add_argument(
+        "--claim-unit", choices=["title", "abstract_claims"], default="title",
+        help="title: one claim/paper (frozen default). abstract_claims: LLM "
+             "decomposes each abstract into atomic claims (N1).",
+    )
+    ap.add_argument(
+        "--llm-provider", type=str, default=None,
+        help="Override SCIRAG_LLM_PROVIDER for abstract-claim decomposition.",
+    )
     args = ap.parse_args()
 
     rows = _load_papers(args.limit)
@@ -80,10 +120,23 @@ def main() -> None:
     in_set, held_set = set(in_ids), set(held_ids)
 
     # Corpus = abstracts of in-corpus (<=Y) papers; scifact-shaped for BM25.
+    # Corpus is identical across claim units — only the claim unit changes.
     corpus_rows = [r for r in rows if r[0] in in_set]
+    held_rows = [r for r in rows if r[0] in held_set]
     corpus = {i: {"title": t, "abstract": [a]} for i, (_pid, t, a, _y) in enumerate(corpus_rows)}
-    in_claims = [t for _pid, t, _a, _y in corpus_rows]
-    held_claims = [t for pid, t, _a, _y in rows if pid in held_set]
+
+    if args.claim_unit == "title":
+        in_claims = [t for _pid, t, _a, _y in corpus_rows]
+        held_claims = [t for _pid, t, _a, _y in held_rows]
+        out_name = "novelty_temporal_qasper.json"
+    else:  # abstract_claims (N1)
+        print(f"decomposing {len(corpus_rows) + len(held_rows)} abstracts -> "
+              f"atomic claims via {args.llm_provider or 'default'} LLM ...", flush=True)
+        decomposer = ClaimDecomposer(get_client(args.llm_provider))
+        cache_path = OUT_DIR / "novelty_claims_cache.jsonl"
+        in_claims = _abstract_claims(corpus_rows, decomposer, cache_path)
+        held_claims = _abstract_claims(held_rows, decomposer, cache_path)
+        out_name = "novelty_temporal_qasper_claims.json"
 
     print(f"papers={len(rows)}  corpus(<= {args.cutoff})={len(corpus)}  "
           f"in-corpus claims={len(in_claims)}  held-out({args.cutoff + 1})={len(held_claims)}")
@@ -105,13 +158,15 @@ def main() -> None:
         "cutoff_year": args.cutoff,
         "k": args.k,
         "nli_model": DEFAULT_MODEL,
-        "claim_unit": "paper_title",
+        "claim_unit": "paper_title" if args.claim_unit == "title" else "abstract_claims",
+        "n_in_papers": len(corpus_rows),
+        "n_held_papers": len(held_rows),
         "corpus": "qasper_dev_abstracts_le_cutoff",
         "git_commit": current_git_commit(),
         "metrics": metrics,
     }
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = OUT_DIR / "novelty_temporal_qasper.json"
+    out_path = OUT_DIR / out_name
     out_path.write_text(json.dumps(result, indent=2))
 
     ic, ho = metrics["in_corpus"], metrics["held_out"]
