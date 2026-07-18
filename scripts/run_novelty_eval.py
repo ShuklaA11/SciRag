@@ -118,6 +118,14 @@ def main() -> None:
         help="Override output path (default: auto-named by claim unit). Used by "
              "the cutoff sweep to avoid overwriting the canonical result.",
     )
+    ap.add_argument(
+        "--nli-model", type=str, default=DEFAULT_MODEL,
+        help="NLI checkpoint for claim assessment (default: base zero-shot).",
+    )
+    ap.add_argument(
+        "--nei-threshold", type=float, default=0.5,
+        help="NEI gating threshold for the NLI classifier.",
+    )
     args = ap.parse_args()
 
     rows = _load_papers(args.limit)
@@ -150,9 +158,9 @@ def main() -> None:
     evaluator = IdeaEvaluator(
         _UnusedDecomposer(),
         _BM25EvidenceAdapter(corpus),
-        NLIClassifier(),
+        NLIClassifier(model_name=args.nli_model, nei_threshold=args.nei_threshold),
         k=args.k,
-        model=DEFAULT_MODEL,
+        model=args.nli_model,
     )
 
     print("scoring in-corpus and held-out claims ...", flush=True)
@@ -162,7 +170,7 @@ def main() -> None:
         "run_name": "novelty_temporal_qasper",
         "cutoff_year": args.cutoff,
         "k": args.k,
-        "nli_model": DEFAULT_MODEL,
+        "nli_model": args.nli_model,
         "claim_unit": "paper_title" if args.claim_unit == "title" else "abstract_claims",
         "n_in_papers": len(corpus_rows),
         "n_held_papers": len(held_rows),

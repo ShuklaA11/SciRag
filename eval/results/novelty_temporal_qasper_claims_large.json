@@ -1,0 +1,33 @@
+{
+  "run_name": "novelty_temporal_qasper",
+  "cutoff_year": 2018,
+  "k": 5,
+  "nli_model": "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli",
+  "claim_unit": "abstract_claims",
+  "n_in_papers": 129,
+  "n_held_papers": 114,
+  "corpus": "qasper_dev_abstracts_le_cutoff",
+  "git_commit": "35ac8d1",
+  "metrics": {
+    "cutoff_year": 2018,
+    "in_corpus": {
+      "n": 879,
+      "novel_rate": 0.006825938566552901,
+      "buckets": {
+        "ENTAILED": 866,
+        "CONTRADICTED": 7,
+        "NOVEL": 6
+      }
+    },
+    "held_out": {
+      "n": 791,
+      "novel_rate": 0.5676359039190898,
+      "buckets": {
+        "ENTAILED": 201,
+        "CONTRADICTED": 141,
+        "NOVEL": 449
+      }
+    },
+    "novelty_gap": 0.5608099653525369
+  }
+}
