@@ -1,0 +1,42 @@
+{
+  "run_name": "novelty_cutoff_sweep_claims",
+  "claim_unit": "abstract_claims",
+  "nli_model": "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli",
+  "corpus": "qasper_dev_abstracts_le_cutoff",
+  "description": "N2 robustness: abstract-claim novelty gap across cutoff years 2017/2018/2019. Shows the N1 win (+0.563 at 2018) is not cherry-picked \u2014 gap holds +0.50..+0.56 across adjacent cutoffs. In-corpus ~0.005 (self-entailment floor), held-out ~0.51-0.57. 2018 row is the committed N1 result.",
+  "gap_min": 0.5006556762832521,
+  "gap_max": 0.5630852782080545,
+  "gap_mean": 0.5411141097863,
+  "per_cutoff": [
+    {
+      "cutoff_year": 2017,
+      "in_corpus_novel_rate": 0.004246284501061571,
+      "held_out_novel_rate": 0.5049019607843137,
+      "novelty_gap": 0.5006556762832521,
+      "n_in_claims": 471,
+      "n_held_claims": 408,
+      "n_in_papers": 71,
+      "n_held_papers": 58
+    },
+    {
+      "cutoff_year": 2018,
+      "in_corpus_novel_rate": 0.004550625711035267,
+      "held_out_novel_rate": 0.5676359039190898,
+      "novelty_gap": 0.5630852782080545,
+      "n_in_claims": 879,
+      "n_held_claims": 791,
+      "n_in_papers": 129,
+      "n_held_papers": 114
+    },
+    {
+      "cutoff_year": 2019,
+      "in_corpus_novel_rate": 0.00718562874251497,
+      "held_out_novel_rate": 0.5667870036101083,
+      "novelty_gap": 0.5596013748675933,
+      "n_in_claims": 1670,
+      "n_held_claims": 277,
+      "n_in_papers": 243,
+      "n_held_papers": 38
+    }
+  ]
+}

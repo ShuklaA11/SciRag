@@ -113,6 +113,11 @@ def main() -> None:
         "--llm-provider", type=str, default=None,
         help="Override SCIRAG_LLM_PROVIDER for abstract-claim decomposition.",
     )
+    ap.add_argument(
+        "--out", type=Path, default=None,
+        help="Override output path (default: auto-named by claim unit). Used by "
+             "the cutoff sweep to avoid overwriting the canonical result.",
+    )
     args = ap.parse_args()
 
     rows = _load_papers(args.limit)
@@ -166,7 +171,8 @@ def main() -> None:
         "metrics": metrics,
     }
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = OUT_DIR / out_name
+    out_path = args.out if args.out is not None else OUT_DIR / out_name
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(result, indent=2))
 
     ic, ho = metrics["in_corpus"], metrics["held_out"]
