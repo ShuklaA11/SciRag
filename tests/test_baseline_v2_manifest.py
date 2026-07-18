@@ -38,6 +38,11 @@ def _resolved_retrieval_cells() -> list[tuple[str, dict]]:
     return [(name, c) for name, c in cells.items() if c.get("source_jsonl")]
 
 
+def _resolved_verification_cells() -> list[tuple[str, dict]]:
+    cells = _manifest()["verification"]
+    return [(name, c) for name, c in cells.items() if c.get("source_jsonl")]
+
+
 def test_manifest_exists_and_parses():
     m = _manifest()
     assert m["manifest_version"] == 1
@@ -57,9 +62,9 @@ def test_retrieval_cell_reaggregates(name, cell):
     assert abs(mean(strict) - cell["mean_recall_at_k_strict"]) < TOL, f"{name}: strict recall drifted"
 
 
-def test_scifact_zeroshot_reaggregates():
-    cell = _manifest()["verification"]["scifact_zeroshot"]
+@pytest.mark.parametrize("name,cell", _resolved_verification_cells())
+def test_scifact_cell_reaggregates(name, cell):
     rows = _load_jsonl(cell["source_jsonl"])
-    assert len(rows) == cell["n_pairs"]
+    assert len(rows) == cell["n_pairs"], f"{name}: n_pairs drifted"
     acc = mean([1.0 if r["gold_label"] == r["pred_label"] else 0.0 for r in rows])
-    assert abs(acc - cell["accuracy"]) < TOL, "scifact zero-shot accuracy drifted"
+    assert abs(acc - cell["accuracy"]) < TOL, f"{name}: scifact accuracy drifted"

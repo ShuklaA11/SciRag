@@ -1,0 +1,32 @@
+{
+  "n_pairs": 340,
+  "accuracy": 0.7735294117647059,
+  "macro_f1": 0.7599908735316641,
+  "per_class_f1": {
+    "SUPPORT": 0.7816091954022988,
+    "CONTRADICT": 0.6969696969696969,
+    "NEI": 0.8013937282229965
+  },
+  "gold_label_dist": {
+    "NEI": 131,
+    "SUPPORT": 138,
+    "CONTRADICT": 71
+  },
+  "pred_label_dist": {
+    "SUPPORT": 123,
+    "NEI": 156,
+    "CONTRADICT": 61
+  },
+  "runtime_sec": 65.47,
+  "run_name": "week9_scifact_large",
+  "results_file": "eval/results/week9_scifact_large.jsonl",
+  "git_commit": "5d7fb82",
+  "model_name": "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli",
+  "device": "mps",
+  "nei_threshold": 0.55,
+  "batch_size": 16,
+  "claims_path": "data/datasets/scifact/claims_dev.json",
+  "corpus_path": "data/datasets/scifact/corpus.json",
+  "limit": null,
+  "n_missing_docs": 0
+}

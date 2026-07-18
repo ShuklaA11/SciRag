@@ -115,6 +115,13 @@
       "accuracy": 0.6911764705882353,
       "macro_f1": 0.6755670895809304
     },
+    "scifact_large_zeroshot": {
+      "description": "V2b WIN: zero-shot DeBERTa-v3-LARGE NLI (MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli), nei_threshold=0.55 (tuned on SciFact train, transfers cleanly: train macro-F1 0.758 -> dev 0.760). Dev acc 0.7735 / macro-F1 0.7600 — +8.2pt acc / +8.4pt macro-F1 over base zero-shot (0.6912/0.6756), with NO fine-tuning. CONTRADICT F1 0.603 -> 0.697 (~hits the pre-registered fine-tune target >=0.70) and beats the pre-registered end-to-end fine-tune target (0.72) outright. V2a (threshold tuning on base) was a NEGATIVE — the gate rarely fires so the threshold has no leverage; the win is entirely the larger model. Shared NLI -> free-rides into cleaner novelty buckets. New cell; frozen scifact_zeroshot untouched.",
+      "source_jsonl": "eval/results/week9_scifact_large.jsonl",
+      "n_pairs": 340,
+      "accuracy": 0.7735294117647059,
+      "macro_f1": 0.76
+    },
     "scifact_finetuned": {
       "description": "Fine-tuned DeBERTa NLI on SciFact — the verification lift over zero-shot",
       "status": "DEFERRED_HARDWARE_BOUND",
