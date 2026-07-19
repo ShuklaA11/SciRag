@@ -13,6 +13,7 @@ data/qdrant/
 data/citation_graph/*.pickle
 data/cache/*.db
 data/hub.db
+data/eval.duckdb
 data/datasets/
 data/grobid_output/
 data/index/

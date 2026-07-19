@@ -1,0 +1,16 @@
+{"id": "best_fuzzy_recall", "question": "Which retrieval run had the highest fuzzy recall? Ignore smoke runs.", "sql": "SELECT run_name FROM runs WHERE task = 'retrieval' AND NOT is_smoke ORDER BY mean_recall_at_k_fuzzy DESC LIMIT 1"}
+{"id": "best_scifact_accuracy", "question": "What was the best SciFact NLI accuracy?", "sql": "SELECT max(accuracy) FROM runs WHERE task = 'scifact_nli'"}
+{"id": "count_rerank_runs", "question": "How many retrieval runs used reranking?", "sql": "SELECT count(*) FROM runs WHERE task = 'retrieval' AND rerank"}
+{"id": "list_week5_runs", "question": "List the names of all week5 runs.", "sql": "SELECT run_name FROM runs WHERE week = 'week5'"}
+{"id": "avg_recall_by_embedder", "question": "What is the average fuzzy recall grouped by embedder for retrieval runs?", "sql": "SELECT embedder, avg(mean_recall_at_k_fuzzy) FROM runs WHERE task = 'retrieval' AND embedder IS NOT NULL GROUP BY embedder"}
+{"id": "zero_recall_count_k10", "question": "How many questions did the week6_rerank_k10 run get a recall of zero on?", "sql": "SELECT count(*) FROM retrieval_results WHERE run_name = 'week6_rerank_k10' AND recall_at_k = 0"}
+{"id": "best_macro_f1_run", "question": "Which SciFact run had the highest macro F1?", "sql": "SELECT run_name FROM runs WHERE task = 'scifact_nli' ORDER BY macro_f1 DESC LIMIT 1"}
+{"id": "p95_latency_k10", "question": "What is the p95 total latency of the week6_rerank_k10 run?", "sql": "SELECT latency_total_p95 FROM runs WHERE run_name = 'week6_rerank_k10'"}
+{"id": "total_non_smoke_runs", "question": "How many runs are there in total, excluding smoke runs?", "sql": "SELECT count(*) FROM runs WHERE NOT is_smoke"}
+{"id": "scifact_large_correct", "question": "How many claims did the week9_scifact_large run classify correctly?", "sql": "SELECT count(*) FROM scifact_results WHERE run_name = 'week9_scifact_large' AND correct"}
+{"id": "distinct_embedders", "question": "How many distinct embedders were used across all runs?", "sql": "SELECT count(DISTINCT embedder) FROM runs WHERE embedder IS NOT NULL"}
+{"id": "runs_above_077", "question": "Which runs have a fuzzy recall above 0.77?", "sql": "SELECT run_name FROM runs WHERE mean_recall_at_k_fuzzy > 0.77 AND NOT is_smoke"}
+{"id": "avg_recall_k10", "question": "What is the average recall_at_k across all questions for the week6_rerank_k10 run?", "sql": "SELECT avg(recall_at_k) FROM retrieval_results WHERE run_name = 'week6_rerank_k10'"}
+{"id": "week_with_most_runs", "question": "Which week has the most runs?", "sql": "SELECT week FROM runs GROUP BY week ORDER BY count(*) DESC LIMIT 1"}
+{"id": "slowest_runtime", "question": "What is the runtime in seconds of the slowest run?", "sql": "SELECT max(runtime_sec) FROM runs"}
+{"id": "contradict_claims_large", "question": "How many claims have a gold label of CONTRADICT in the week9_scifact_large run?", "sql": "SELECT count(*) FROM scifact_results WHERE run_name = 'week9_scifact_large' AND gold_label = 'CONTRADICT'"}

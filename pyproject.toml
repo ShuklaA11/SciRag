@@ -16,6 +16,9 @@ dependencies = [
     "qdrant-client>=1.9.0",
     "faiss-cpu>=1.8.0",
 
+    # SQL warehouse (text-to-SQL over eval results)
+    "duckdb>=1.0.0",
+
     # LLM providers
     "ollama>=0.3.0",
 
