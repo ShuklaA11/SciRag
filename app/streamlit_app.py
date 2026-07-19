@@ -23,6 +23,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # make sibling `engine` importable
 
 import streamlit as st
+from crew import build_crew
 from engine import build_evaluator
 
 from src.hub import HubStore, domain_options
@@ -121,11 +122,39 @@ def _wiki_search_page() -> None:
         st.write(f"**{h.title}** &nbsp; `{h.kind}` · `{h.ident}` · score {h.score:.1f}")
 
 
+def _workshop_page() -> None:
+    st.header("Research workshop")
+    st.caption(
+        "A multi-agent crew — a LangGraph **supervisor** routing between a "
+        "**retriever**, a **verifier** (DeBERTa-large NLI), and a "
+        "**novelty-scout** — researches your question over the benchmarked corpus."
+    )
+    query = st.text_area("Research question")
+    if not st.button("Run crew", type="primary"):
+        return
+    if not query.strip():
+        st.error("Enter a research question.")
+        return
+
+    result = build_crew().run(query.strip())
+
+    st.subheader("Crew findings")
+    if not result.findings:
+        st.info("The supervisor finished without consulting a specialist.")
+    for i, finding in enumerate(result.findings, start=1):
+        with st.expander(f"Step {i} · {finding.tool}", expanded=True):
+            st.markdown(finding.summary)
+
+    st.subheader("Answer")
+    st.markdown(result.answer or "_(no answer produced)_")
+
+
 def main() -> None:
     st.set_page_config(page_title="SciRAG hub", page_icon="🔬")
     page = st.navigation(
         [
             st.Page(_new_project_page, title="New project", default=True),
+            st.Page(_workshop_page, title="Research workshop"),
             st.Page(_evaluate_page, title="Evaluate idea"),
             st.Page(_wiki_search_page, title="Wiki search"),
             st.Page(_projects_page, title="Projects"),
