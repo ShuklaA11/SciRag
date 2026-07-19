@@ -1,4 +1,4 @@
-# SciRAG v2
+# SciRAG
 
 **An LLM-compiled scientific knowledge base with section-aware retrieval, citation-graph expansion, and claim verification.**
 
@@ -51,7 +51,7 @@ Query engine: classifier ──► section-routed retrieval + citation expansion
 | Citation graph | Semantic Scholar API | SQLite-cached |
 | Orchestration | LangGraph | multi-hop state machine |
 | SQL warehouse | DuckDB | eval results to text-to-SQL (`src/sqllab/`) |
-| Frontend | Obsidian + Streamlit | viewer + hub UI - engineering is in the pipeline |
+| Frontend | Obsidian + Streamlit | Obsidian vault viewer + Streamlit hub UI |
 
 ## Datasets
 
@@ -89,7 +89,7 @@ docker compose stop grobid
 # Ollama loads the model on first request
 ```
 
-Qdrant (~200 MB) is lightweight and stays up.
+Qdrant (~200 MB) is legacy and idle (FAISS is the active store), but it's light enough to leave running.
 
 ---
 
@@ -244,10 +244,17 @@ The NL→SQL layer is **schema-grounded** (an auto-generated data dictionary is 
 into the prompt), enforces a **read-only single-`SELECT` guard**, and runs one
 `EXPLAIN`-driven **repair** on failure. Accuracy is measured by execution match against
 `eval/sql_gold.jsonl`: **13/16 (81.2%)** with Llama-3.1-8B via Ollama. The harness is
-provider-agnostic (`SCIRAG_LLM_PROVIDER`), so LLMs can be benchmarked head-to-head.
+provider-agnostic (`SCIRAG_LLM_PROVIDER`), so additional providers can be benchmarked head-to-head once wired up.
 
 ---
 
-## License
+## Further reading
 
-MIT - see [LICENSE](LICENSE).
+| Doc | What's inside |
+|---|---|
+| [`docs/WRITEUP.md`](docs/WRITEUP.md) | Full technical writeup: benchmarked methods layer, domain-adaptive hub, and the auditable novelty evaluator |
+| [`DEMO.md`](DEMO.md) | ~3-minute end-to-end walkthrough of the system |
+| [`eval/results/README.md`](eval/results/README.md) | How the per-component eval runs are structured (`.jsonl` rows + `_summary.json` aggregates) |
+| [`data/README.md`](data/README.md) | Inventory of every data artifact under `data/` and `raw/` |
+| [`app/streamlit_app.py`](app/streamlit_app.py) | Streamlit hub UI entrypoint |
+| [`wiki/indices/`](wiki/indices/) | Auto-generated INDEX, GLOSSARY, TIMELINE, and QUESTIONS over the compiled wiki |
