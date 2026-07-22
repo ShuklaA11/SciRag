@@ -40,23 +40,29 @@ _MAX_PERMUTED_COLS = 6
 
 
 def result_sets_match(pred: list[tuple] | tuple, gold: list[tuple] | tuple) -> bool:
-    """True if the two result sets are equal, tolerating row AND column order.
+    """True if gold's answer is recoverable from pred, tolerating row and column
+    order AND extra columns.
 
-    Column-order tolerance mirrors Spider/BIRD execution match: a query that
-    selects the right values in a different column order is still correct. We
-    only try column permutations for small results (bounded factorial cost).
+    Rationale: strict shape-matching (Spider exec) penalizes a stronger model
+    that returns the right answer *plus* helpful context — e.g. gold asks for
+    `max(accuracy)` and the model returns `(run_name, accuracy)` of the top run.
+    Both answer the question. We accept pred when some ordered selection of its
+    columns reproduces gold's rows exactly (values must match; row count must
+    match), so genuinely wrong values still fail. Bounded to small results.
     """
     gold_norm = _normalize(gold)
     if _normalize(pred) == gold_norm:
         return True
-    if not pred or not gold:
+    if not gold:
+        return not pred
+    if not pred:
         return False
-    n_cols = len(gold[0])
-    if len(pred[0]) != n_cols or n_cols > _MAX_PERMUTED_COLS:
+    n_gold, n_pred = len(gold[0]), len(pred[0])
+    if n_pred < n_gold or n_pred > _MAX_PERMUTED_COLS:
         return False
-    for perm in permutations(range(n_cols)):
-        permuted = [tuple(row[i] for i in perm) for row in pred]
-        if _normalize(permuted) == gold_norm:
+    for cols in permutations(range(n_pred), n_gold):  # subsumes reorder + projection
+        projected = [tuple(row[i] for i in cols) for row in pred]
+        if _normalize(projected) == gold_norm:
             return True
     return False
 

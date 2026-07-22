@@ -71,12 +71,38 @@ class OllamaProvider(LLMClient):
 
 
 class AnthropicProvider(LLMClient):
-    """Stub — install with: pip install scirag[anthropic]"""
+    """Anthropic Claude provider. Install with: pip install scirag[anthropic]
 
-    def generate(self, system: str, user: str, **kwargs) -> str:
-        raise NotImplementedError(
-            "Anthropic provider not yet implemented. Install extras: pip install scirag[anthropic]"
+    Reads ANTHROPIC_API_KEY from the environment. Model defaults to Sonnet and
+    can be overridden with SCIRAG_ANTHROPIC_MODEL or the `model` argument.
+    """
+
+    def __init__(self, model: str | None = None) -> None:
+        self.model = model or os.environ.get("SCIRAG_ANTHROPIC_MODEL", "claude-sonnet-4-6")
+
+    def generate(
+        self,
+        system: str,
+        user: str,
+        *,
+        max_tokens: int = 1024,
+        temperature: float = 0.7,
+        response_format: str | None = None,
+        num_ctx: int | None = None,
+    ) -> str:
+        import anthropic
+
+        if response_format == "json":
+            system = system + "\n\nRespond with valid JSON only, no prose."
+        client = anthropic.Anthropic()  # picks up ANTHROPIC_API_KEY from env
+        resp = client.messages.create(
+            model=self.model,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            system=system,
+            messages=[{"role": "user", "content": user}],
         )
+        return "".join(block.text for block in resp.content if block.type == "text")
 
 
 class OpenAIProvider(LLMClient):

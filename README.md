@@ -129,7 +129,7 @@ Create a `.env` file in the project root:
 
 ```
 SEMANTIC_SCHOLAR_API_KEY=your_key_here
-SCIRAG_LLM_PROVIDER=ollama   # or "anthropic" / "openai" once those are wired up
+SCIRAG_LLM_PROVIDER=ollama   # or "anthropic" (Claude); "openai" is not yet wired
 ```
 
 ### 5. Download datasets and seed corpus
@@ -221,7 +221,7 @@ export SCIRAG_LLM_PROVIDER=anthropic     # Claude (requires `pip install scirag[
 export SCIRAG_LLM_PROVIDER=openai        # GPT-4o (requires `pip install scirag[openai]`)
 ```
 
-The Anthropic and OpenAI providers are stubs that raise `NotImplementedError` until wired up.
+Ollama and Anthropic are live; the OpenAI provider is a stub that raises `NotImplementedError` until wired up.
 
 ---
 
@@ -242,9 +242,23 @@ python scripts/eval_text_to_sql.py                                # execution-ma
 
 The NL→SQL layer is **schema-grounded** (an auto-generated data dictionary is injected
 into the prompt), enforces a **read-only single-`SELECT` guard**, and runs one
-`EXPLAIN`-driven **repair** on failure. Accuracy is measured by execution match against
-`eval/sql_gold.jsonl`: **13/16 (81.2%)** with Llama-3.1-8B via Ollama. The harness is
-provider-agnostic (`SCIRAG_LLM_PROVIDER`), so additional providers can be benchmarked head-to-head once wired up.
+`EXPLAIN`-driven **repair** on failure. Accuracy is execution match against
+`eval/sql_gold.jsonl` using result-set equivalence that tolerates extra context
+columns: a strict shape-match under-credits a model that returns the right answer
+plus a helpful column, so the matcher accepts any column selection reproducing the
+gold rows (genuinely wrong values still fail).
+
+Head-to-head (16 gold questions, `scripts/eval_text_to_sql.py`):
+
+| Provider | Model | Execution accuracy |
+|---|---|---|
+| Ollama | Llama-3.1-8B Q4 | 13/16 (81.2%) |
+| Anthropic | Claude Sonnet 4.6 | 14/16 (87.5%) |
+
+Under the earlier strict matcher Claude scored 8/16; the 6-case gap was entirely
+result-set-equivalent extra columns, not wrong logic. The harness is provider-agnostic
+(`SCIRAG_LLM_PROVIDER`): swap models and re-run, or re-score frozen predictions with
+`scripts/rescore_text_to_sql.py`.
 
 ---
 

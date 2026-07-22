@@ -73,3 +73,20 @@ def test_result_sets_match_tolerates_column_order():
     pred = [(0.771, "bge"), (0.739, "specter2")]      # (avg, embedder)
     gold = [("bge", 0.771), ("specter2", 0.739)]      # (embedder, avg)
     assert result_sets_match(pred, gold)
+
+
+@pytest.mark.unit
+def test_result_sets_match_tolerates_extra_context_columns():
+    # gold asks for the top run name; pred returns name + its accuracy (helpful
+    # context). Both answer the question, so the extra column must not fail it.
+    pred = [("week4_bge", 0.771)]
+    gold = [("week4_bge",)]
+    assert result_sets_match(pred, gold)
+
+
+@pytest.mark.unit
+def test_result_sets_match_rejects_extra_columns_with_wrong_values():
+    # extra columns don't buy a pass when the gold values aren't present
+    pred = [("specter2", 0.739)]
+    gold = [("bge",)]
+    assert not result_sets_match(pred, gold)

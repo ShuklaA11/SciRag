@@ -48,12 +48,24 @@ def test_provider_name_case_insensitive():
     assert isinstance(client, OllamaProvider)
 
 
-# --- Stub providers raise NotImplementedError ---
+# --- AnthropicProvider config (wired; live generate needs the key + package) ---
 
 
-def test_anthropic_stub_raises():
-    with pytest.raises(NotImplementedError, match="Anthropic provider not yet implemented"):
-        AnthropicProvider().generate(system="test", user="test")
+def test_anthropic_default_model_is_sonnet():
+    assert AnthropicProvider().model == "claude-sonnet-4-6"
+
+
+def test_anthropic_model_env_override(monkeypatch):
+    monkeypatch.setenv("SCIRAG_ANTHROPIC_MODEL", "claude-opus-4-8")
+    assert AnthropicProvider().model == "claude-opus-4-8"
+
+
+def test_anthropic_explicit_model_overrides_env(monkeypatch):
+    monkeypatch.setenv("SCIRAG_ANTHROPIC_MODEL", "claude-opus-4-8")
+    assert AnthropicProvider(model="claude-haiku-4-5").model == "claude-haiku-4-5"
+
+
+# --- OpenAI is still a stub ---
 
 
 def test_openai_stub_raises():
